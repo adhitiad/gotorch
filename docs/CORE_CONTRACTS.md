@@ -10,9 +10,18 @@ These contracts define subsystem boundaries before implementation expands. Their
 
 ## Tensor metadata
 
-A tensor descriptor defines dtype, shape, element strides, layout, storage, ownership, mutability, and placement. The P0 `tensor.Metadata` value covers dtype, shape, strides, and derived contiguous/strided layout only. It owns no storage and is not yet a public owning `Tensor` type.
+A tensor descriptor defines dtype, shape, element strides, layout, storage, ownership, mutability, and placement. The P0 `tensor.Metadata` value covers dtype, shape, strides, and derived contiguous/strided layout only. It owns no storage; P1 adds the owning `tensor.Tensor` lifecycle described below.
 
 Strides are measured in elements. Negative strides are not accepted by the initial P0 contract. A view must keep its backing storage alive for its entire lifetime; aliasing and overlapping-write rules must be made explicit in P1 before mutable views are exposed.
+
+### P1 owning Tensor and storage
+
+- `tensor.Tensor` owns exactly one `storage.Storage` handle. Do not copy a Tensor after first use; use `Retain` to obtain a separate handle with an independent `Close` lifecycle.
+- `Close` is idempotent. The zero value owns no resources; its methods other than `Close` return `errs.ErrInvalidState`. Closing the zero value is safe.
+- Constructors allocate contiguous storage. Rank zero has one element; any zero dimension has zero elements and owns a valid zero-byte storage handle.
+- The Pure Go `storage.HeapAllocator` returns zero-initialized storage. Every retained storage handle is released independently; the allocation is reclaimed after its final handle is released.
+- Typed construction and access encode/decode fixed-width values in little-endian form. `From` and `Write` copy input values; `Read` returns a new copy. No typed slice aliases internal storage.
+- No raw backing slice or mutable storage handle is exposed by Tensor. Views, strides, overlapping writes, and non-contiguous typed access remain later P1 work and must preserve the above lifetime rules.
 
 ## Storage ownership
 
@@ -24,7 +33,7 @@ Strides are measured in elements. Negative strides are not accepted by the initi
 - Asynchronous work and views retain storage until their final use is complete.
 - Allocation size, offsets, and lengths are validated before use; range checks must not overflow.
 
-P0 defines the interface and range validator; the concrete allocator and buffer implementations are P1 work.
+P0 defined the interface and range validator; P1 provides a concrete Pure Go heap allocator.
 
 ## Kernel and backend
 
@@ -58,11 +67,11 @@ Public APIs document error behavior, concurrency safety, mutation, ownership, dt
 ## P0 implementation map
 
 - `errs`: stable sentinel errors.
-- `dtype`, `shape`, `tensor`: metadata and checked arithmetic.
-- `storage`: ownership-aware storage and allocator interfaces.
+- `dtype`, `shape`, `tensor`: metadata and checked arithmetic, plus the initial P1 owning Tensor API.
+- `storage`: ownership-aware storage interface and Pure Go heap allocator.
 - `compute`: kernel specification, invocation, backend interface, and pre-dispatch validation.
 - `runtime`: component lifecycle manager.
 - `distributed`: identity and membership validation.
 - `platform`: primary and compatibility target classification.
 
-See [`P0_IMPLEMENTATION.md`](P0_IMPLEMENTATION.md) for current limits and exit gates.
+See [`P0_IMPLEMENTATION.md`](P0_IMPLEMENTATION.md) for P0 limits and exit gates, and [`TASK.md`](TASK.md) for P1 task status.

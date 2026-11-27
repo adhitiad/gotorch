@@ -6,11 +6,10 @@
 - **Repository:** `github.com/adhitiad/gotorch`
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
-- **Current phase:** P0 — Foundation
-- **Current status:** P0 foundation, source-layout migration, maintainer API review, and all P0 exit gates are complete. The reviewed commit passed native CI on Windows AMD64, Linux AMD64, and Linux ARM64. See [P0 API Review](P0_API_REVIEW.md) and [P0 implementation record](P0_IMPLEMENTATION.md).
+- **Current phase:** P1 — Tensor Engine
+- **Current status:** P0 is closed. P1-001 through P1-003 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. P1 continues with P01-004 onward; see [P1 API Review](P1_API_REVIEW.md).
 
 ---
-
 ## 1. Project definition
 
 GoTorch is a Go-native, full deep-learning and numerical-computing framework. It is not limited to model inference. The intended system covers tensor storage and operations, automatic differentiation, neural-network modules, optimizers, data pipelines, CPU execution, graph compilation, training, inference, quantization, model interoperability, and distributed execution.
@@ -163,9 +162,9 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Deliverables:** concrete CPU storage/allocator, owning Tensor API, constructors, indexing, views, strides, slicing, reshape/transpose, broadcasting metadata, copy/contiguous operations and safe serialization primitives.
 
-- [ ] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior.
-- [ ] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles.
-- [ ] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing.
+- [x] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior ([review](P1_API_REVIEW.md)).
+- [x] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles ([review and CI](P1_API_REVIEW.md)).
+- [x] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing ([review and CI](P1_API_REVIEW.md)).
 - [ ] `P01-004` Implement row-major indexing and checked multidimensional offset calculation.
 - [ ] `P01-005` Implement views and define aliasing/overlapping-write rules.
 - [ ] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations.

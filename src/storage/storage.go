@@ -1,5 +1,5 @@
-// Package storage defines ownership-aware byte storage contracts. Concrete allocators
-// and memory implementations are introduced with the Tensor Engine in P1.
+// Package storage provides ownership-aware byte storage contracts and implementations.
+// The Pure Go heap allocator is suitable as the portable CPU reference allocator.
 package storage
 
 import (
