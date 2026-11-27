@@ -5,8 +5,8 @@ import (
 	"context"
 	"errors"
 	"io"
-	"testing"
 	"sync"
+	"testing"
 
 	"github.com/adhitiad/gotorch/src/errs"
 )
