@@ -175,7 +175,7 @@ These are starting acceptance budgets, not claims of universal numerical error b
 ### Invocation and ownership
 
 A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.
- -benchmem -count=5 ./src/compute
+ -benchmem -count=5 -v ./src/compute
 
 # Architecture SIMD path; only kernels supported by this build/CPU are included.
 GOEXPERIMENT=simd go test -run='^

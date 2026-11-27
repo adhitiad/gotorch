@@ -65,7 +65,7 @@ jobs:
         run: go test -race ./...
       - name: Benchmark smoke (Linux AMD64)
         if: runner.os == 'Linux' && matrix.goarch == 'amd64'
-        run: go test -run=TestNoTests -bench=BenchmarkCPU -benchtime=100ms -count=3 -benchmem ./src/compute
+        run: go test -run=TestNoTests -bench=BenchmarkCPU -benchtime=100ms -count=3 -benchmem -v ./src/compute
   simd:
     name: SIMD experiment (${{ matrix.os }}, ${{ matrix.goarch }})
     strategy:
@@ -114,5 +114,10 @@ jobs:
           library="$(ldconfig -p | awk '/libopenblas.so.0/{print $NF; exit}')"
           test -n "$library"
           echo "GOTORCH_OPENBLAS_LIBRARY=$library" >> "$GITHUB_ENV"
+      - name: Record benchmark host
+        run: |
+          go version
+          go env GOOS GOARCH GOEXPERIMENT
+          lscpu
       - name: Benchmark real OpenBLAS GEMM and thread policy
         run: go test -tags=gotorch_blas -run=TestNoTests -bench=BenchmarkCPUOpenBLASMatMul -benchtime=100ms -count=3 -benchmem ./src/compute
