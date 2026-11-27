@@ -60,3 +60,30 @@ Floating-point reduction order can change results. Define operation-specific tol
 ## Benchmarks
 
 Benchmarks must report shape, dtype, layout, architecture, Go version, build flags (including whether `GOEXPERIMENT=simd` is enabled), allocations and throughput. Compare scalar and optimized paths using the same workload and verify output before reporting speedup.
+
+
+## P3 reference kernel implementation
+
+The first Pure Go reference backend is registered as `compute.ReferenceCPUBackend` and selected through `compute.Registry`. Registration order is the deterministic dispatch precedence: optimized backends are registered before the scalar fallback.
+
+The initial reference operation set is:
+
+- Elementwise binary: `add`, `sub`, `mul`, `div` (identical shapes).
+- Elementwise unary: `neg`, `exp`, `log`, `relu`.
+- Full reductions: `sum`, `mean`.
+- Rank-2 matrix multiplication: `matmul`.
+
+The reference path supports float32 and float64. Inputs may use non-negative strided layouts; outputs must be contiguous. Integer, complex, float16 and bfloat16 arithmetic, broadcasting, batched matrix multiplication and partial-axis reductions are not implemented in this slice.
+
+### Numerical and cancellation policy
+
+- Element traversal and reductions use deterministic logical row-major order.
+- Float32 inputs are decoded exactly to float64 for scalar calculation and rounded once when stored as float32. Float64 operations retain float64 precision.
+- Reductions and matrix products accumulate in float64 for both supported dtypes, then cast once to the output dtype. This is an explicit first-version accuracy policy, not a promise of bitwise parity with vendor BLAS.
+- Division follows IEEE-754 behavior: zero divisors may produce infinities or NaNs. Logarithms of zero/negative inputs follow Go's `math.Log` behavior. ReLU propagates NaN.
+- Cancellation is checked during long elementwise loops, reductions and matrix products. A cancelled operation may have partially written its caller-provided output; callers must discard or overwrite that output after an error.
+- Different optimized implementations may use different reduction order. They must declare their numerical behavior and pass operation-specific differential tolerances before dispatch is enabled.
+
+### Invocation and ownership
+
+A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.
