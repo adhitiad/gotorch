@@ -74,19 +74,31 @@ func (b *simdCPUBackend) Execute(ctx context.Context, spec KernelSpec, call Invo
 	}
 	if spec.DType == dtype.Float32 {
 		a, err := readSIMDFloat32(call.Inputs[0], count)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		b, err := readSIMDFloat32(call.Inputs[1], count)
-		if err != nil { return err }
+		if err != nil {
+			return err
+		}
 		dst := make([]float32, int(count))
-		if err := simdBinaryFloat32(ctx, dst, a, b, spec.Operation); err != nil { return err }
+		if err := simdBinaryFloat32(ctx, dst, a, b, spec.Operation); err != nil {
+			return err
+		}
 		return writeSIMDFloat32(call.Outputs[0], dst)
 	}
 	a, err := readSIMDFloat64(call.Inputs[0], count)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	b, err := readSIMDFloat64(call.Inputs[1], count)
-	if err != nil { return err }
+	if err != nil {
+		return err
+	}
 	dst := make([]float64, int(count))
-	if err := simdBinaryFloat64(ctx, dst, a, b, spec.Operation); err != nil { return err }
+	if err := simdBinaryFloat64(ctx, dst, a, b, spec.Operation); err != nil {
+		return err
+	}
 	return writeSIMDFloat64(call.Outputs[0], dst)
 }
 
@@ -99,13 +111,23 @@ func simdByteSize(count, width int64) (int, error) {
 
 func readSIMDBytes(arg Argument, count, width int64) ([]byte, error) {
 	size, err := simdByteSize(count, width)
-	if err != nil { return nil, err }
-	if err := storageRange(arg, int64(size)); err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
+	if err := storageRange(arg, int64(size)); err != nil {
+		return nil, err
+	}
 	buf := make([]byte, size)
-	if size == 0 { return buf, nil }
+	if size == 0 {
+		return buf, nil
+	}
 	n, err := arg.Storage.ReadAt(buf, arg.Offset)
-	if err != nil { return nil, fmt.Errorf("SIMD input read: %w", err) }
-	if n != size { return nil, errs.ErrInvalidState }
+	if err != nil {
+		return nil, fmt.Errorf("SIMD input read: %w", err)
+	}
+	if n != size {
+		return nil, errs.ErrInvalidState
+	}
 	return buf, nil
 }
 
@@ -118,36 +140,54 @@ func storageRange(arg Argument, length int64) error {
 
 func readSIMDFloat32(arg Argument, count int64) ([]float32, error) {
 	raw, err := readSIMDBytes(arg, count, 4)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	values := make([]float32, int(count))
-	for i := range values { values[i] = math.Float32frombits(binary.LittleEndian.Uint32(raw[i*4:])) }
+	for i := range values {
+		values[i] = math.Float32frombits(binary.LittleEndian.Uint32(raw[i*4:]))
+	}
 	return values, nil
 }
 
 func readSIMDFloat64(arg Argument, count int64) ([]float64, error) {
 	raw, err := readSIMDBytes(arg, count, 8)
-	if err != nil { return nil, err }
+	if err != nil {
+		return nil, err
+	}
 	values := make([]float64, int(count))
-	for i := range values { values[i] = math.Float64frombits(binary.LittleEndian.Uint64(raw[i*8:])) }
+	for i := range values {
+		values[i] = math.Float64frombits(binary.LittleEndian.Uint64(raw[i*8:]))
+	}
 	return values, nil
 }
 
 func writeSIMDBytes(arg Argument, raw []byte) error {
-	if err := storageRange(arg, int64(len(raw))); err != nil { return err }
+	if err := storageRange(arg, int64(len(raw))); err != nil {
+		return err
+	}
 	n, err := arg.Storage.WriteAt(raw, arg.Offset)
-	if err != nil { return fmt.Errorf("SIMD output write: %w", err) }
-	if n != len(raw) { return errs.ErrInvalidState }
+	if err != nil {
+		return fmt.Errorf("SIMD output write: %w", err)
+	}
+	if n != len(raw) {
+		return errs.ErrInvalidState
+	}
 	return nil
 }
 
 func writeSIMDFloat32(arg Argument, values []float32) error {
 	raw := make([]byte, len(values)*4)
-	for i, value := range values { binary.LittleEndian.PutUint32(raw[i*4:], math.Float32bits(value)) }
+	for i, value := range values {
+		binary.LittleEndian.PutUint32(raw[i*4:], math.Float32bits(value))
+	}
 	return writeSIMDBytes(arg, raw)
 }
 
 func writeSIMDFloat64(arg Argument, values []float64) error {
 	raw := make([]byte, len(values)*8)
-	for i, value := range values { binary.LittleEndian.PutUint64(raw[i*8:], math.Float64bits(value)) }
+	for i, value := range values {
+		binary.LittleEndian.PutUint64(raw[i*8:], math.Float64bits(value))
+	}
 	return writeSIMDBytes(arg, raw)
 }
