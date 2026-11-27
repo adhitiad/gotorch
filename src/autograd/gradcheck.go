@@ -75,7 +75,10 @@ func CheckGradient(
 		return result, fmt.Errorf("%w: gradient check has %d elements; limit is %d", errs.ErrInvalidArgument, numel, maxElements(options.MaxElements))
 	}
 	step, absoluteTolerance, relativeTolerance, maximum := normalizedCheckOptions(elementType, options)
-	if maximum <= 0 {
+	if maximum <= 0 || step <= 0 || absoluteTolerance < 0 || relativeTolerance < 0 ||
+		math.IsNaN(step) || math.IsInf(step, 0) ||
+		math.IsNaN(absoluteTolerance) || math.IsInf(absoluteTolerance, 0) ||
+		math.IsNaN(relativeTolerance) || math.IsInf(relativeTolerance, 0) {
 		return result, errs.ErrInvalidArgument
 	}
 
