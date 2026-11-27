@@ -2,6 +2,7 @@ package tensor
 
 import (
 	"errors"
+	"math/rand"
 	"reflect"
 	"testing"
 
@@ -184,4 +185,43 @@ func mustShape(t *testing.T, value *Tensor) []int64 {
 		t.Fatal(err)
 	}
 	return metadata.Shape().Dims()
+}
+
+func TestPropertyViewAliasAndIndependentLifetime(t *testing.T) {
+	random := rand.New(rand.NewSource(0xA11A5))
+	for iteration := 0; iteration < 100; iteration++ {
+		rows := int64(random.Intn(5) + 2)
+		columns := int64(random.Intn(5) + 2)
+		values := make([]int32, int(rows*columns))
+		for index := range values {
+			values[index] = int32(iteration*1000 + index)
+		}
+		source, err := From(values, rows, columns)
+		if err != nil {
+			t.Fatal(err)
+		}
+		transpose, err := source.Transpose()
+		if err != nil {
+			_ = source.Close()
+			t.Fatal(err)
+		}
+		row := int64(random.Intn(int(columns)))
+		column := int64(random.Intn(int(rows)))
+		replacement := int32(-iteration - 1)
+		if err := Set(transpose, replacement, row, column); err != nil {
+			t.Fatalf("iteration %d Set: %v", iteration, err)
+		}
+		if got, err := At[int32](source, column, row); err != nil || got != replacement {
+			t.Fatalf("iteration %d alias value = %d, %v; want %d", iteration, got, err, replacement)
+		}
+		if err := source.Close(); err != nil {
+			t.Fatal(err)
+		}
+		if got, err := At[int32](transpose, row, column); err != nil || got != replacement {
+			t.Fatalf("iteration %d view after source Close = %d, %v; want %d", iteration, got, err, replacement)
+		}
+		if err := transpose.Close(); err != nil {
+			t.Fatal(err)
+		}
+	}
 }

@@ -125,7 +125,7 @@ func TestMetadataBroadcastInferenceAndValidation(t *testing.T) {
 		t.Fatalf("empty broadcast dims = %v, want %v", empty.Dims(), want)
 	}
 
-	incompatible, _ := shape.New(4, 3)
+	incompatible, _ := shape.New(4, 3, 3)
 	if _, err := BroadcastShapes(a, incompatible); err == nil {
 		t.Fatal("incompatible broadcast accepted")
 	}

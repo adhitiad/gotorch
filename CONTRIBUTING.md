@@ -5,7 +5,7 @@ Thank you for helping improve GoTorch. Contributions include code, tests, benchm
 ## Before opening a pull request
 
 1. Read [AGENTS.md](AGENTS.md) and the relevant [.agent/rules/](.agent/rules/) documents.
-2. Read the canonical [P0–P13 task plan](docs/TASK.md), [project charter](docs/PROJECT_CHARTER.md), [architecture](docs/ARCHITECTURE.md) and [roadmap](docs/ROADMAP.md).
+2. Read the canonical [P0–P13 task plan](docs/TASK.md), [project charter](docs/PROJECT_CHARTER.md), [architecture](docs/ARCHITECTURE.md), [roadmap](docs/ROADMAP.md) and [Go AI Ecosystem Guide](docs/AI_ECOSYSTEM.md).
 3. Search existing issues and discussions. Identify the task ID (for example `P03-006`) and confirm that no other contributor is already implementing it.
 4. For public API, numerical, concurrency, storage, compiler, platform or distributed protocol changes, submit an architecture proposal and ADR before implementation when the change affects a fundamental contract.
 

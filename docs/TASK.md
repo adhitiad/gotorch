@@ -199,7 +199,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Purpose:** execute supported tensor operations efficiently while keeping a trusted, portable reference implementation.
 
-**Deliverables:** kernel registry, Pure Go scalar kernels, capability detection, SIMD implementations, optional BLAS/LAPACK adapters, dispatch and differential tests.
+**Deliverables:** kernel registry, Pure Go scalar kernels, capability detection, Go SIMD implementations, optional BLAS/LAPACK adapters, dispatch and differential tests. Go 1.27 experimental SIMD is an implementation option, not a stable public API; the scalar fallback remains mandatory. See [CPU Compute Strategy](CPU_COMPUTE.md) and the [Go AI Ecosystem Guide](AI_ECOSYSTEM.md).
 
 - [ ] `P03-001` Define operation registry and kernel selection metadata.
 - [ ] `P03-002` Implement Pure Go reference kernels for core unary and binary operations.
@@ -214,6 +214,8 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
 
 **Exit gates:** every supported operation has a reference path; unsupported combinations fail clearly; optimized paths pass differential tests; benchmark reports include environment and reproducible commands.
+
+**Current engineering priority after P1:** Pure Go CPU reference kernels first, SIMD dispatch and validated architecture-specific kernels second, optional BLAS/LAPACK adapters third. GPU and distributed acceleration are not prerequisites for P3.
 
 ### P4 — Scheduler & Memory Engine
 
@@ -258,7 +260,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Purpose:** load, transform, batch and stream datasets with deterministic behavior and bounded concurrency.
 
-**Deliverables:** dataset interfaces, samplers, DataLoader, transforms, batching, prefetch, caching and streaming adapters.
+**Deliverables:** dataset interfaces, samplers, DataLoader, transforms, batching, prefetch, caching and streaming adapters. Start with streaming JSONL/NDJSON and CSV adapters using the Go standard library; add Parquet and Hugging Face Hub support as optional adapters. See [Go AI Ecosystem Guide](AI_ECOSYSTEM.md).
 
 - [ ] `P06-001` Define Dataset, Sample, Sampler and Batch contracts.
 - [ ] `P06-002` Implement sequential and random samplers with explicit seeds.
