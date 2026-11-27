@@ -14,6 +14,8 @@ These instructions are the repository-wide contract for every human or coding ag
 
 ## 2. Canonical task and instruction sources
 
+For agent-specific discovery paths and first-run setup, see [docs/AGENT_SETUP.md](docs/AGENT_SETUP.md).
+
 Read in this order:
 1. `AGENTS.md` (this file).
 2. `docs/TASK.md` — canonical phase checklist, task IDs, dependencies and acceptance criteria.

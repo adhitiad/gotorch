@@ -406,6 +406,8 @@ This process is intentionally tool-agnostic. Agents should not maintain separate
 
 ### Required reading order
 
+For runtime-specific instruction/skill discovery, consult [`docs/AGENT_SETUP.md`](AGENT_SETUP.md). This does not replace the shared repository rules below.
+
 1. Root `AGENTS.md`.
 2. This file: `docs/TASK.md`.
 3. Relevant package-level `AGENTS.md`, if any.

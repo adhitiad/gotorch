@@ -42,6 +42,7 @@ Storage · RAM · Cache · NUMA · Network
 - `gotorch.go`: small root public API facade.
 - `docs/TASK.md`: canonical roadmap, P0–P13 descriptions, dependency map and implementation checklists.
 - `AGENTS.md`: shared instructions for coding agents.
+- `docs/AGENT_SETUP.md`: discovery/setup guidance for Codex, OpenClaw, OpenCode, Hermes and Copilot.
 - `.agents/skills/`: portable reusable agent skills.
 - `.agent/rules/`, `.agent/workflows/`, `.agent/templates/`: engineering rules and task playbooks.
 - `community/`: governance, conduct, support, security and release policy.
