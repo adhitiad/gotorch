@@ -53,7 +53,7 @@ func NewTape() *Tape {
 // NewVariable records an input/leaf value. The Tape stores a deep snapshot.
 // Only float32 and float64 leaves may require gradients.
 func (t *Tape) NewVariable(value *tensor.Tensor, requiresGrad bool) (*Variable, error) {
-	if value == nil {
+	if t == nil || value == nil {
 		return nil, errs.ErrInvalidArgument
 	}
 	metadata, err := value.Metadata()
@@ -81,6 +81,9 @@ func (t *Tape) NewVariable(value *tensor.Tensor, requiresGrad bool) (*Variable, 
 // RegisterOperation registers a custom differentiable operation on this Tape.
 // Names are local to the Tape; duplicate and empty names are rejected.
 func (t *Tape) RegisterOperation(operation Operation) error {
+	if t == nil {
+		return errs.ErrInvalidArgument
+	}
 	name := strings.TrimSpace(operation.Name)
 	if name == "" || name != operation.Name || operation.Backward == nil {
 		return errs.ErrInvalidArgument
@@ -102,7 +105,7 @@ func (t *Tape) RegisterOperation(operation Operation) error {
 // exist on this Tape, which makes cycles impossible and preserves topological
 // append order.
 func (t *Tape) Apply(name string, inputs []*Variable, output *tensor.Tensor) (*Variable, error) {
-	if output == nil || len(inputs) == 0 {
+	if t == nil || output == nil || len(inputs) == 0 {
 		return nil, errs.ErrInvalidArgument
 	}
 	outputMetadata, err := output.Metadata()
@@ -209,13 +212,16 @@ func (v *Variable) RequiresGrad() bool {
 // Backward seeds target with ones and accumulates gradients into every
 // reachable requires-grad Variable. Repeated calls accumulate until ZeroGrad.
 func (t *Tape) Backward(ctx context.Context, target *Variable) error {
+	if t == nil {
+		return errs.ErrInvalidArgument
+	}
 	return t.BackwardWithGradient(ctx, target, nil)
 }
 
 // BackwardWithGradient is Backward with an explicit upstream seed. seed must
 // have the same shape and dtype as target. A nil seed is equivalent to ones.
 func (t *Tape) BackwardWithGradient(ctx context.Context, target *Variable, seed *tensor.Tensor) error {
-	if ctx == nil || target == nil {
+	if t == nil || ctx == nil || target == nil {
 		return errs.ErrInvalidArgument
 	}
 	t.mu.Lock()
@@ -304,7 +310,8 @@ func (t *Tape) BackwardWithGradient(ctx context.Context, target *Variable, seed 
 			parentID := node.inputs[i]
 			if !nodes[parentID].requiresGrad {
 				if contribution != nil {
-					_ = contribution.Close()
+						_ = contribution.Close()
+					contributions[i] = nil
 				}
 				continue
 			}
@@ -312,11 +319,11 @@ func (t *Tape) BackwardWithGradient(ctx context.Context, target *Variable, seed 
 				_ = closeTensors(contributions)
 				return fmt.Errorf("%w: operation %q returned an invalid gradient for input %d", errs.ErrGradientShapeMismatch, node.opName, i)
 			}
-			contributions[i] = nil // ownership moves into the gradient map
 			if err := accumulateGradient(gradients, parentID, contribution); err != nil {
 				_ = closeTensors(contributions)
 				return err
 			}
+			contributions[i] = nil // ownership moved into the gradient map
 		}
 	}
 
@@ -363,6 +370,9 @@ func (t *Tape) finishBackward() {
 // ZeroGrad clears all gradients when called without arguments, or only the
 // specified Variables. It cannot run concurrently with graph execution.
 func (t *Tape) ZeroGrad(variables ...*Variable) error {
+	if t == nil {
+		return errs.ErrInvalidArgument
+	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if err := t.mutableLocked(); err != nil {
@@ -393,6 +403,9 @@ func (t *Tape) ZeroGrad(variables ...*Variable) error {
 
 // NodeCount reports the number of recorded graph nodes.
 func (t *Tape) NodeCount() int {
+	if t == nil {
+		return 0
+	}
 	t.mu.Lock()
 	defer t.mu.Unlock()
 	if t.closed {
