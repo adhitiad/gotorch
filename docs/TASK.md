@@ -108,17 +108,37 @@ The folders shown for future phases are **planned locations**, not a requirement
 | P2 | Automatic Differentiation | Forward/reverse AD and gradient lifecycle | P1 |
 | P3 | CPU Compute | Pure Go reference kernels, safe dispatch, SIMD and optional BLAS | P1 |
 | P4 | Scheduler & Memory | Bounded parallel execution and explicit memory reuse/lifetime | P1, P3 |
-| P5 | Neural Networks & Optimizers | Modules, layers, losses, optimizers and parameter management | P2, P3, P4 |
-| P6 | Data Engine | Dataset, sampler, batching, DataLoader and transforms | P0, P4 |
+| P5 | Neural Networks, Transformers & PEFT | Modules, transformer architectures, optimizers and native adapters | P2, P3, P4 |
+| P6 | Data & Tokenizer Engine | Dataset, tokenizers, samplers, batching, DataLoader and transforms | P0, P4 |
 | P7 | Compiler & Graph Optimization | Typed graph IR, validation, optimization and execution plans | P1, P3, P4 |
-| P8 | Training & Inference Runtime | Trainer, evaluation, inference sessions, checkpoint and resume | P5, P6, P7 |
-| P9 | Quantization | Mixed precision, calibration, INT8/INT4 and quantized execution | P3, P5, P8 |
-| P10 | Distributed Compute | Coordinator, workers, collectives, DDP and recovery | P8; identity contracts start in P0 |
-| P11 | Model Interoperability | ONNX, Safetensors and versioned native model format | P1, P5, P8 |
+| P8 | Training & Inference Runtime | Generation, SFT, DPO/RL trainers, evaluation, checkpoint and resume | P5, P6, P7 |
+| P9 | Quantization & QLoRA | Mixed precision, INT8/INT4, NF4/FP4 and quantized execution | P3, P5, P8 |
+| P10 | Distributed & Accelerated Runtime | Launcher, data parallelism, sharding, collectives and recovery | P8; identity contracts start in P0 |
+| P11 | Model Interoperability | Hugging Face configs/weights, ONNX, Safetensors and native model format | P1, P5, P8 |
 | P12 | Ecosystem & Tooling | CLI, profiler, registry, extension APIs, examples and tutorials | P8–P11 |
 | P13 | Production Readiness | Security, stability, performance, release engineering and supportability | P0–P12 |
 
 **Dependency rule:** Do not implement a phase by bypassing an unfinished dependency. A narrow prototype may be proposed as an experiment, but it must be labelled experimental and must not silently become a public contract.
+
+### 3.1 Go-Native AI Stack — architecture and acceptance contract
+
+GoTorch targets first-party Go implementations of workflows commonly associated with Transformers, PEFT, bitsandbytes, TRL and Accelerate. This is **functional capability coverage**, not a promise to clone Python APIs or provide drop-in compatibility with those projects.
+
+**Hard language constraint:** GoTorch-owned model architecture, tokenizers, file parsers, kernels, optimizers, trainers and runtime orchestration must be implemented in Go. The supported CPU path must not require Python, Python subprocesses, CGo, Rust, C or C++ components. Pure Go scalar kernels are the reference path; optional SIMD implementations must have a tested scalar fallback. Do not add Python bindings or shell-outs as a hidden implementation shortcut.
+
+| Capability | Native Go deliverables | Phase ownership |
+|---|---|---|
+| Transformers | Config/model registry; embeddings; positional encoding and RoPE; LayerNorm/RMSNorm; MHA/GQA/MQA; attention masks; FFN/SwiGLU; encoder/decoder blocks; tokenizer support; KV cache; generation/sampling; supported Hugging Face config and weight loading | P5, P6, P8, P11 |
+| PEFT | Freeze/select parameters; adapter injection; LoRA first; adapter checkpointing and merge/unmerge; later IA3 and prompt/prefix tuning; QLoRA integration | P5, P8, P9, P11 |
+| bitsandbytes-equivalent | Blockwise INT8; NF4/FP4 4-bit weight quantization; quantization scales and double quantization; quantized matmul; 8-bit optimizer states; numerical error/accuracy controls | P3, P5, P9 |
+| TRL-style training | Instruction/preference datasets; SFT; reward-model training; DPO; PPO/RLHF as an advanced follow-on; evaluation and deterministic recipes | P6, P8 |
+| Accelerate-style runtime | Runtime/device abstraction; gradient accumulation/checkpointing; mixed precision; worker launcher/topology; CPU-first data parallelism; sharded state and distributed checkpoint/recovery | P4, P8, P9, P10 |
+
+**Supported scope must be explicit.** Each model claim lists architecture/config, tokenizer, weight format, dtype, inference path and tested platform. Each training claim lists objective, optimizer, data schema, checkpoint state and numerical acceptance criteria. No blanket “full compatibility” claim is allowed from one passing example.
+
+**Delivery order:** transformer blocks and a small reference model → tokenizer/data pipeline and model loading → inference/generation → LoRA → SFT and DPO → reward modeling and PPO → INT8/NF4/FP4 and QLoRA → multi-process and sharded execution. GPU/vendor acceleration is not a prerequisite for the portable Go CPU path.
+
+**Go-native stack exit gate:** on a clean supported machine, Go tooling alone can build and test GoTorch, load a declared model, tokenize input, run inference and execute each declared Go-native training recipe. CI verifies the required path does not invoke a Python interpreter or foreign-language runtime.
 
 ---
 
@@ -255,8 +275,15 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P05-010` Implement learning-rate scheduler interfaces and core schedules.
 - [ ] `P05-011` Add gradient and optimizer regression tests, including XOR/simple regression.
 - [ ] `P05-012` Document layer, loss and optimizer semantics.
+- [ ] `P05-013` Implement transformer primitives: embeddings, positional encoding/RoPE, LayerNorm and RMSNorm.
+- [ ] `P05-014` Implement attention primitives: MHA/GQA/MQA, causal/padding masks and numerically stable softmax.
+- [ ] `P05-015` Implement feed-forward/SwiGLU and composable encoder/decoder Transformer blocks with explicit shape/dtype contracts.
+- [ ] `P05-016` Implement named parameter targeting, freeze/unfreeze and trainable-parameter enumeration for fine-tuning.
+- [ ] `P05-017` Implement LoRA adapter injection, low-rank A/B parameters, target-module selection and gradient tests.
+- [ ] `P05-018` Implement adapter state save/load and safe merge/unmerge semantics.
+- [ ] `P05-019` Specify and prototype additional PEFT methods (IA3 and prompt/prefix tuning); ship only after independent acceptance tests.
 
-**Exit gates:** forward/backward results are correct; optimizer state is serializable; seeded tests are deterministic; training examples converge within stated tolerances.
+**Exit gates:** forward/backward results are correct; optimizer state is serializable; seeded tests are deterministic; training examples converge within stated tolerances. Transformer layers pass shape, numerical and gradient checks against small reference fixtures. LoRA updates only the declared trainable parameters, preserves frozen base weights and round-trips adapter state.
 
 ### P6 — Data Engine
 
@@ -272,8 +299,13 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P06-006` Implement optional cache and streaming source interfaces.
 - [ ] `P06-007` Add determinism, worker failure, cancellation and resource-bound tests.
 - [ ] `P06-008` Benchmark throughput, latency and memory footprint.
+- [ ] `P06-009` Define Tokenizer/Encoding interfaces with deterministic encode/decode and special-token handling.
+- [ ] `P06-010` Implement BPE and byte-level BPE tokenization with merge-rank and Unicode edge-case tests.
+- [ ] `P06-011` Implement WordPiece and SentencePiece/Unigram tokenization behind independent implementations and explicit compatibility fixtures.
+- [ ] `P06-012` Parse supported tokenizer assets/configuration directly in Go, including vocabulary, merges, added tokens and special-token maps.
+- [ ] `P06-013` Implement instruction and preference dataset schemas plus SFT/DPO collators, masks and truncation policies.
 
-**Exit gates:** same seed produces documented ordering; errors do not strand workers; memory and worker counts are bounded; throughput benchmarks are reproducible.
+**Exit gates:** same seed produces documented ordering; errors do not strand workers; memory and worker counts are bounded; throughput benchmarks are reproducible. Tokenizer behavior is verified against checked-in reference vectors and reports unsupported tokenizer features instead of silently degrading.
 
 ### P7 — Compiler & Graph Optimization
 
@@ -310,8 +342,15 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P08-008` Implement batching and request cancellation.
 - [ ] `P08-009` Add train-save-load-resume-infer integration tests.
 - [ ] `P08-010` Document serving and training resource requirements.
+- [ ] `P08-011` Implement autoregressive generation with KV cache, greedy decoding, temperature, top-k/top-p, repetition penalty, stop tokens/sequences and cancellation.
+- [ ] `P08-012` Implement an SFT trainer for causal language models with masking, optional sequence packing, gradient accumulation and resumable checkpoints.
+- [ ] `P08-013` Implement DPO training with reference-policy handling, beta configuration, stable loss computation and preference metrics.
+- [ ] `P08-014` Implement pairwise reward-model training and evaluation with a documented preference-data contract.
+- [ ] `P08-015` Implement PPO/RLHF as an advanced trainer with clipped objective, value/reward handling, KL control and bounded rollout lifecycle.
+- [ ] `P08-016` Implement activation/gradient checkpointing and explicit mixed-precision policy hooks where supported.
+- [ ] `P08-017` Publish small, reproducible Go-only inference, SFT, LoRA and DPO examples with fixture datasets.
 
-**Exit gates:** train/save/load/resume/infer workflow succeeds; corrupted checkpoints fail safely; session concurrency is tested; resource cleanup and cancellation are reliable.
+**Exit gates:** train/save/load/resume/infer workflow succeeds; corrupted checkpoints fail safely; session concurrency is tested; resource cleanup and cancellation are reliable. Generation tests verify cache/non-cache parity. SFT and DPO recipes run end-to-end on deterministic toy datasets and verify gradients, loss direction and checkpoint resume. PPO is not advertised as supported until its dedicated stability tests pass.
 
 ### P9 — Quantization & Numerical Optimization
 
@@ -327,8 +366,13 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P09-006` Implement mixed-precision execution and accumulation policies.
 - [ ] `P09-007` Add accuracy, saturation, overflow and numerical stability tests.
 - [ ] `P09-008` Benchmark memory, latency, throughput and accuracy trade-offs.
+- [ ] `P09-009` Implement blockwise INT8 weight quantization, scale metadata, dequantization and supported quantized matmul kernels.
+- [ ] `P09-010` Implement blockwise 4-bit NF4 and FP4 formats with packing/unpacking and numerical reference tests.
+- [ ] `P09-011` Implement double quantization for quantization constants with versioned metadata and error bounds.
+- [ ] `P09-012` Implement selected 8-bit optimizer-state representations and update rules behind explicit optimizer configuration.
+- [ ] `P09-013` Integrate quantized frozen base weights with trainable LoRA adapters for QLoRA-style fine-tuning.
 
-**Exit gates:** quantization is explicit and versioned; accuracy impacts are measured; no silent dtype conversion; fallback behavior is defined.
+**Exit gates:** quantization is explicit and versioned; accuracy impacts are measured; no silent dtype conversion; fallback behavior is defined. Quantized outputs and gradients are checked against high-precision references using documented tolerances. NF4/FP4, double quantization, 8-bit optimizer state and QLoRA are separate support claims and require separate tests.
 
 ### P10 — Distributed Computing
 
@@ -347,8 +391,13 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P10-009` Implement consistent distributed checkpoint and restart.
 - [ ] `P10-010` Test worker crash, partial collective, timeout, duplicate message and network partition.
 - [ ] `P10-011` Benchmark communication overhead and scaling efficiency separately.
+- [ ] `P10-012` Define Go-native execution topology, rank/local-rank identity, process launch configuration and environment validation.
+- [ ] `P10-013` Implement deterministic distributed sampling and data-shard assignment.
+- [ ] `P10-014` Implement CPU-first multi-process data-parallel training with gradient synchronization and explicit reduction semantics.
+- [ ] `P10-015` Implement an experimental sharded parameter/optimizer-state strategy with bounded gathering and documented recovery limits.
+- [ ] `P10-016` Extend checkpoint manifests for world-size, rank, sharding and resumability validation.
 
-**Exit gates:** collectives are correct and ordered; authentication is mandatory; retries are bounded and idempotent where applicable; worker failure and recovery are tested; local operations remain network-free.
+**Exit gates:** collectives are correct and ordered; authentication is mandatory; retries are bounded and idempotent where applicable; worker failure and recovery are tested; local operations remain network-free. Single-process and multi-process training produce results within declared tolerances, and distributed state can be validated before resume.
 
 ### P11 — Model Interoperability
 
@@ -363,8 +412,12 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P11-005` Implement ONNX export for explicitly listed operators.
 - [ ] `P11-006` Add parity, round-trip, malformed-file and resource-limit tests.
 - [ ] `P11-007` Document unsupported operators, conversions and compatibility.
+- [ ] `P11-008` Implement Go-native parsing of supported Hugging Face model configs and generation metadata, then map them to registered GoTorch architectures.
+- [ ] `P11-009` Implement sharded Safetensors index/weight loading with bounded memory, missing/unexpected-key diagnostics and deterministic mapping.
+- [ ] `P11-010` Add model compatibility manifests and parity fixtures covering config, tokenizer, weights, dtype and supported inference operations.
+- [ ] `P11-011` Document direct Go loading/conversion workflows and explicitly unsupported architectures/operators without requiring Python export scripts.
 
-**Exit gates:** format versions are explicit; hostile files cannot trigger unbounded allocation; supported models pass parity tests; unsupported features fail with actionable errors.
+**Exit gates:** format versions are explicit; hostile files cannot trigger unbounded allocation; supported models pass parity tests; unsupported features fail with actionable errors. Model support is reported per architecture and artifact layout; loading a weight file alone does not imply that its architecture or generation path is supported.
 
 ### P12 — Ecosystem & Tooling
 
