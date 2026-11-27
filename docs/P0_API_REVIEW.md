@@ -1,8 +1,8 @@
 # P0 Maintainer API Review
 
-**Review date:** 2026-11-27  
-**Reviewed branch:** `adhitiad_gpt`  
-**Review scope:** exported P0 contracts, invalid and boundary inputs, ownership/lifecycle semantics, platform behavior, documentation alignment, and pre-1.0 API stability.
+- **Review date:** 2026-11-27
+- **Reviewed branch:** `adhitiad_gpt`
+- **Review scope:** exported P0 contracts, invalid and boundary inputs, ownership/lifecycle semantics, platform behavior, documentation alignment, and pre-1.0 API stability.
 
 ## Decision
 
