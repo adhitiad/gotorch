@@ -1,0 +1,31 @@
+name: Performance report
+description: Report a measurable performance issue or optimization opportunity.
+title: "[perf]: "
+labels: ["type: performance", "status: triage"]
+body:
+  - type: input
+    id: commit
+    attributes:
+      label: Commit / version
+    validations:
+      required: true
+  - type: input
+    id: hardware
+    attributes:
+      label: CPU, memory, OS, and Go version
+    validations:
+      required: true
+  - type: textarea
+    id: benchmark
+    attributes:
+      label: Reproducible benchmark
+      description: Include input sizes, warm-up, repetitions, baseline, and commands.
+      render: go
+    validations:
+      required: true
+  - type: textarea
+    id: results
+    attributes:
+      label: Results and variance
+    validations:
+      required: true
