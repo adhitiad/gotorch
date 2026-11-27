@@ -52,3 +52,7 @@ These modes should share tensor semantics and operator definitions while allowin
 - Distributed transport must not leak into ordinary local tensor operations.
 - Core module must compile without CGo or vendor SDKs.
 - Optional optimized backends must have a reference fallback.
+
+## P0 implementation checkpoint
+
+P0's current foundation contracts are provided by `errs`, `dtype`, `shape`, `tensor`, `storage`, `compute`, `runtime`, `distributed`, and `platform`. They do not yet provide a concrete tensor allocator, tensor arithmetic, reference CPU kernels, SIMD/BLAS execution, or distributed transport. Those are later-phase deliverables, even though their contracts are defined early.
