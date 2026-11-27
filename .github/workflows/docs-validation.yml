@@ -6,7 +6,6 @@ on:
       - "**/*.md"
       - "**/*.yml"
       - "**/*.yaml"
-      - ".github/workflows/docs-validation.yml"
   push:
     branches: [main]
     paths:
@@ -36,13 +35,11 @@ jobs:
             exit 1
           fi
       - name: Validate YAML
+        shell: bash
         run: |
-          python - <<'PY'
-          from pathlib import Path
-          import yaml
-          files = list(Path(".github").rglob("*.yml")) + list(Path(".github").rglob("*.yaml"))
-          for path in files:
-              with path.open(encoding="utf-8") as stream:
-                  yaml.safe_load(stream)
-              print(f"OK {path}")
-          PY
+          set -euo pipefail
+          find .github -type f \( -name '*.yml' -o -name '*.yaml' \) -print0 |
+            while IFS= read -r -d '' file; do
+              ruby -e 'require "yaml"; YAML.load_file(ARGV.fetch(0))' "$file"
+              echo "OK $file"
+            done
