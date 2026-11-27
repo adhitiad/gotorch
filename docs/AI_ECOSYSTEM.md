@@ -222,6 +222,24 @@ The purpose of this guide is to help users reuse existing tools while keeping th
 
 **Current focus:** complete Tensor correctness first, then CPU scalar kernels and SIMD acceleration. GPU, CGo, XLA and distributed execution remain optional integrations or later phases. Do not let an external framework become a hidden mandatory dependency of GoTorch.
 
+## 8. GoTorch first-party Go implementation target
+
+This guide describes the **existing external ecosystem**. GoTorch's own commitment is different: the roadmap now targets native Go implementations of the five capability groups commonly associated with Transformers, PEFT, bitsandbytes, TRL and Accelerate.
+
+| Capability group | GoTorch-owned implementation target | Tracking |
+|---|---|---|
+| Transformers | Transformer layers/architectures, tokenizers, generation/KV cache, supported Hugging Face config and Safetensors weight loading | [ROADMAP](ROADMAP.md), P5/P6/P8/P11 in [TASK](TASK.md) |
+| PEFT | LoRA first; adapter lifecycle and later IA3/prompt/prefix tuning; QLoRA integration | P5/P8/P9/P11 in [TASK](TASK.md) |
+| bitsandbytes-equivalent | Pure Go blockwise INT8, NF4/FP4, double quantization, quantized kernels and selected 8-bit optimizer states | P3/P5/P9 in [TASK](TASK.md) |
+| TRL-style training | SFT, DPO, reward model and later PPO/RLHF recipes | P6/P8 in [TASK](TASK.md) |
+| Accelerate-style runtime | Gradient accumulation/checkpointing, mixed-precision policy, Go process launcher, CPU-first data parallelism and sharded recovery | P4/P8/P9/P10 in [TASK](TASK.md) |
+
+**These are planned capabilities, not currently shipped features.** P0 and P1 are complete; the Go-native model/training stack remains future work behind the dependencies shown in the task plan. Do not tell users that GoTorch currently supports Transformers, LoRA, NF4, DPO or distributed training until the relevant task IDs are implemented, tested and accepted.
+
+**Implementation rule:** GoTorch-owned runtime paths must be Go. Python-first libraries and external Go projects in this guide are useful research/reference options, but they are not implementation shortcuts, mandatory dependencies, or evidence of GoTorch feature completion. The required CPU path must work without a Python interpreter, Python subprocess, CGo, Rust, C or C++ runtime. Pure Go scalar kernels remain the correctness baseline; optimized SIMD paths must keep a tested fallback.
+
+The project promises documented support for specific architectures, tokenizers, weight layouts, dtypes and training objectives—not blanket API or behavioral parity with the Python libraries whose workflows inspired the feature set.
+
 ## 7. Contribution guidance
 
 When proposing a new dependency or adapter, include:
