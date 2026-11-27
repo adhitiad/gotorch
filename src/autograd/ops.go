@@ -78,4 +78,3 @@ func (t *Tape) Sum(input *Variable) (*Variable, error) {
 	defer output.Close()
 	return t.Apply("sum", []*Variable{input}, output)
 }
-
