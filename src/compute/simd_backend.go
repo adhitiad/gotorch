@@ -58,11 +58,11 @@ func (*simdCPUBackend) Supports(spec KernelSpec, call Invocation) bool {
 	return true
 }
 
-func (b *simdCPUBackend) Execute(ctx context.Context, spec KernelSpec, call Invocation) error {
+func (backend *simdCPUBackend) Execute(ctx context.Context, spec KernelSpec, call Invocation) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if !b.Supports(spec, call) {
+	if !backend.Supports(spec, call) {
 		return errs.ErrUnsupportedBackend
 	}
 	count, err := call.Outputs[0].Metadata.Numel()
