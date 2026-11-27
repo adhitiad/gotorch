@@ -6,8 +6,8 @@
 - **Repository:** `github.com/adhitiad/gotorch`
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
-- **Current phase:** P2 — Automatic Differentiation
-- **Current status:** P0 and P1 are closed. P1-001 through P1-011 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. See [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
+- **Current phase:** P3 — CPU Compute
+- **Current status:** P0, P1 and P2 are implemented and verified. P2 provides a Go-native reverse/forward automatic-differentiation engine, gradient lifecycle, custom VJP/JVP rules and finite-difference checks. The native Go 1.27 matrix passed on Windows AMD64, Linux AMD64 and Linux ARM64; see [Autograd API](AUTOGRAD_API.md), [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
 
 ---
 ## 1. Project definition
@@ -202,21 +202,24 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Purpose:** provide mathematically correct differentiation that can power neural-network training and custom differentiable operations.
 
-**Deliverables:** graph/tape model, gradient storage, reverse mode, forward-mode foundations, gradient accumulation, backward scheduling and gradient checks.
+**Deliverables:** graph/tape model, gradient storage, reverse mode, forward-mode foundations, gradient accumulation, custom operation registration, finite-difference gradient checks and explicit graph/tensor lifetime contracts.
 
-- [ ] `P02-001` Specify graph node, operation context, saved tensor and graph lifetime contracts.
-- [ ] `P02-002` Implement gradient state and parameter requires-grad semantics.
-- [ ] `P02-003` Implement reverse-mode graph recording and topological backward traversal.
-- [ ] `P02-004` Implement gradient accumulation, zeroing, retention and release behavior.
-- [ ] `P02-005` Implement backward rules for core differentiable tensor operations.
-- [ ] `P02-006` Add custom operation/gradient registration with validation.
-- [ ] `P02-007` Add forward-mode differentiation foundations where API semantics are clear.
-- [ ] `P02-008` Implement finite-difference gradient checker with dtype-aware tolerances.
-- [ ] `P02-009` Test repeated backward, graph release, shared subgraphs and cancellation.
-- [ ] `P02-010` Document gradient lifecycle and unsupported differentiability cases.
+- [x] P02-001 Specify graph node, operation context, saved tensor and graph lifetime contracts ([Autograd API](AUTOGRAD_API.md), [core contracts](CORE_CONTRACTS.md#automatic-differentiation-p2)).
+- [x] P02-002 Implement gradient state and parameter requires-grad semantics (Tape.NewVariable, Variable.RequiresGrad, Variable.Grad).
+- [x] P02-003 Implement reverse-mode graph recording and topological backward traversal (Tape.Apply, Tape.Backward, Tape.BackwardWithGradient).
+- [x] P02-004 Implement gradient accumulation, zeroing, retention and release behavior (ZeroGrad, Tape lifecycle and transactional gradient commit).
+- [x] P02-005 Implement backward rules for core differentiable tensor operations (float32/float64 Add, Mul, Sum).
+- [x] P02-006 Add custom operation/gradient registration with validation (RegisterOperation, VJP result validation and callback ownership rules).
+- [x] P02-007 Add forward-mode differentiation foundations where API semantics are clear (Tape.JVP, optional per-operation Forward rule).
+- [x] P02-008 Implement finite-difference gradient checker with dtype-aware tolerances (CheckGradient, bounded to 256 elements by default).
+- [x] P02-009 Test repeated backward, graph release, shared subgraphs and cancellation ([autograd tests](../src/autograd/)).
+- [x] P02-010 Document gradient lifecycle and unsupported differentiability cases ([Autograd API](AUTOGRAD_API.md)).
 
-**Exit gates:** analytical gradients match finite differences within documented tolerance; no graph/tensor lifetime leaks; repeated backward semantics are explicit; race tests cover supported concurrent use.
+**Exit gates:** analytical gradients match finite differences within dtype-aware tolerances; graph values and gradients have explicit ownership and release behavior; repeated backward accumulates; failures and cancellation do not partially commit gradients; callback results are validated; native Windows AMD64/Linux AMD64/Linux ARM64 CI passes.
 
+**Verification:** [Go CI run 45941641390](https://github.com/adhitiad/gotorch/actions/runs/45941641390) passed on the P2 implementation before final documentation updates: gofmt, go list, go test and go vet on all three platforms; Linux race tests on AMD64 and ARM64; Linux AMD64 benchmark smoke. Documentation validation passed on the P2 PR head before the final checklist synchronization.
+
+**Accepted P2 limits:** only float32 and float64 carry gradients; built-in Add/Mul require identical shapes; Sum reduces all elements to a scalar. No broadcasting-gradient reductions, matrix multiplication, convolution, higher-order derivatives, low-precision/complex gradients, activation checkpointing or parallel backward scheduler are claimed. Built-in arithmetic is a Pure Go reference path; the general CPU kernel registry and optimized dispatch belong to P3.
 ### P3 — CPU Compute
 
 **Purpose:** execute supported tensor operations efficiently while keeping a trusted, portable reference implementation.

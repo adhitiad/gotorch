@@ -18,4 +18,7 @@ var (
 	ErrOverlappingWrite                = errors.New("gotorch: bulk write to overlapping tensor view")
 	ErrInvalidSerialization            = errors.New("gotorch: invalid tensor serialization")
 	ErrUnsupportedSerializationVersion = errors.New("gotorch: unsupported tensor serialization version")
+	ErrNoGradient                      = errors.New("gotorch: gradient is not available")
+	ErrGradientShapeMismatch           = errors.New("gotorch: gradient shape or dtype mismatch")
+	ErrOperationAlreadyRegistered      = errors.New("gotorch: autograd operation already registered")
 )
