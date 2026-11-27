@@ -1,6 +1,6 @@
 # P1 Tensor Engine — Ownership, Views and Data Semantics
 
-> P01-001 through P01-011 are implemented on `adhitiad_gpt`. This document records the concrete API and its accepted limits; final native CI evidence is recorded in [P1 API Review](P1_API_REVIEW.md).
+> P01-001 through P01-011 are implemented and reviewed on `adhitiad_gpt`. The full native matrix and Linux AMD64 benchmark smoke passed in [Go CI run 45937237974](https://github.com/adhitiad/gotorch/actions/runs/45937237974); see [P1 API Review](P1_API_REVIEW.md) for the closure decision.
 
 ## Ownership and lifecycle
 
