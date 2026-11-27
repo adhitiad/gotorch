@@ -229,7 +229,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P03-001` Define operation registry and kernel selection metadata.
 - [x] `P03-002` Implement Pure Go reference kernels for core unary and binary operations.
 - [x] `P03-003` Implement reductions and matrix multiplication reference kernels.
-- [x] `P03-004` Define numerical tolerance and determinism policy per operation.
+- [ ] `P03-004` Define numerical tolerance and determinism policy per operation.
 - [ ] `P03-005` Implement runtime CPU feature detection without assuming host capabilities.
 - [ ] `P03-006` Add architecture-isolated SIMD kernels with scalar fallback.
 - [ ] `P03-007` Add optional BLAS/LAPACK adapter behind build/runtime configuration.
@@ -240,7 +240,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Current implementation slice:** P03-001 through P03-004 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise operations, full reductions and rank-2 matrix multiplication, plus an explicit numerical/cancellation policy. The initial dtype/layout boundary is float32/float64 with strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
 
-**Verification pending:** the P3 PR must pass the native Windows AMD64, Linux AMD64 and Linux ARM64 CI matrix before this slice is considered merged. SIMD dispatch, CPU feature detection, optional BLAS/LAPACK and optimized-kernel differential benchmarks remain open P3 tasks. GPU and distributed acceleration are not prerequisites for P3.
+**Verification pending:** the P3 PR must pass the native Windows AMD64, Linux AMD64 and Linux ARM64 CI matrix before this slice is considered merged. Operation-specific tolerance budgets, CPU feature detection, SIMD dispatch, optional BLAS/LAPACK, thread coordination, optimized-kernel differential tests and benchmark suites remain open P3 tasks. GPU and distributed acceleration are not prerequisites for P3.
 
 ### P4 — Scheduler & Memory Engine
 
