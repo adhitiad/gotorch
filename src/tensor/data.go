@@ -23,8 +23,8 @@ type BFloat16Bits uint16
 type Element interface {
 	bool | int8 | int16 | int32 | int64 |
 		uint8 | uint16 | uint32 | uint64 |
-	float32 | float64 | complex64 | complex128 |
-	Float16Bits | BFloat16Bits
+		float32 | float64 | complex64 | complex128 |
+		Float16Bits | BFloat16Bits
 }
 
 // From constructs a CPU tensor from a copy of values. If dimensions are omitted,
