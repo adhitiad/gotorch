@@ -29,6 +29,20 @@ Strides are measured in elements. Negative strides are not accepted by the initi
 - `MarshalBinary` emits a versioned, little-endian logical snapshot. `UnmarshalBinary` validates magic, format version, dtype, dimensions, payload length and canonical Bool bytes before installing a new allocation; it requires a zero or closed receiver.
 - No raw backing slice or mutable storage handle is exposed by Tensor.
 
+## Automatic differentiation (P2)
+
+- Each autograd.Tape owns an append-only graph, private snapshots of node values, and committed gradient buffers. Variables are immutable handles identified by Tape and node ID.
+- NewVariable and Apply deep-copy their input/output Tensor values. Public Value/Grad accessors return independent copies. The graph remains valid until Tape.Close; Close releases every graph value and gradient.
+- Graph parents must exist before a node is appended and must belong to the same Tape. This preserves topological order and prevents cycles through the public API.
+- Differentiable dtypes in P2 are float32 and float64 only. Integer, Bool, Float16/BFloat16 bit payloads and complex tensors are not differentiable.
+- Reverse mode applies one vector-Jacobian product per operation in reverse topological order. Each rule returns one shape/dtype-compatible gradient per input; the engine validates and owns these returned tensors.
+- Gradients accumulate across repeated Backward calls. ZeroGrad clears all or selected Variables. A Backward failure or cancellation must not partially replace previously committed gradients.
+- JVP rules are optional per operation. A node reached by a tangent without a forward rule must fail explicitly rather than silently return zero.
+- Built-in Add/Mul/Sum are equal-shape, float32/float64 correctness primitives. Broadcasting, matrix operations, general CPU kernels and parallel backward scheduling remain outside P2.
+- A Tape serializes graph mutation, Backward, JVP, ZeroGrad and Close. Callbacks receive independent snapshots, must honor context cancellation, and must not retain or close borrowed snapshots.
+
+See [Autograd API](AUTOGRAD_API.md) for usage, ownership, callback contracts and numerical limits.
+
 ## Storage ownership
 
 `storage.Storage` is an independently releasable handle to a shared allocation:
@@ -81,3 +95,13 @@ Public APIs document error behavior, concurrency safety, mutation, ownership, dt
 - `platform`: primary and compatibility target classification.
 
 See [`P0_IMPLEMENTATION.md`](P0_IMPLEMENTATION.md) for P0 limits and exit gates, and [`TASK.md`](TASK.md) for P1 task status.
+
+
+## CPU compute (P3 initial slice)
+
+- `compute.Registry` dispatches to the first registered backend that supports the operation signature. Registration order is stable and is the precedence rule.
+- `compute.ReferenceCPUBackend` is the mandatory Pure Go scalar baseline for float32/float64 elementwise arithmetic, unary math, full sum/mean reductions and rank-2 matrix multiplication.
+- Reference kernels accept strided input metadata and require contiguous caller-owned outputs. They do not broadcast shapes or allocate storage.
+- Reductions and matrix products accumulate in float64 and cast once to the output dtype; traversal order is logical row-major and deterministic.
+- IEEE-754 division/log behavior is retained; ReLU propagates NaN. Cancellation may leave a caller-provided output partially written, so failed outputs must be discarded or overwritten.
+- SIMD and BLAS backends are optional and must be registered ahead of the scalar backend only after capability checks, numerical differential tests and reproducible benchmarks.

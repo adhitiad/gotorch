@@ -28,7 +28,7 @@ Reference: [Go 1.27 SIMD release notes](https://go.dev/doc/go1.27), [portable SI
 
 ## Runtime CPU feature detection
 
-Use runtime feature detection rather than compile-time assumptions. The optional module `golang.org/x/sys/cpu` exposes architecture feature flags such as AMD64 AVX2/AVX-512 and ARM64 ASIMD. Optional alternatives such as `github.com/klauspost/cpuid/v2` provide broader CPU/topology detail; avoid duplicate feature-detection dependencies unless a measured requirement justifies them.
+GoTorch uses `golang.org/x/sys/cpu` as its single runtime detector. `compute.DetectCPUFeatures` snapshots architecture, initialization status, AMD64 AVX2/AES and ARM64 ASIMD/AES. The package accounts for OS-managed extended register state on x86 before reporting AVX2. If initialization is unavailable, consumers must choose the scalar backend. Do not infer support from `GOARCH` alone, and do not execute SIMD merely because a feature flag is present; a kernel must also be compiled for that ISA and pass its own dispatch constraints.
 
 Dispatch must account for architecture, CPU feature availability, OS state support, dtype, layout, shape, alignment and workload size. Small operations may remain scalar to avoid dispatch and scheduling overhead.
 
@@ -60,3 +60,45 @@ Floating-point reduction order can change results. Define operation-specific tol
 ## Benchmarks
 
 Benchmarks must report shape, dtype, layout, architecture, Go version, build flags (including whether `GOEXPERIMENT=simd` is enabled), allocations and throughput. Compare scalar and optimized paths using the same workload and verify output before reporting speedup.
+
+
+## P3 reference kernel implementation
+
+The first Pure Go reference backend is registered as `compute.ReferenceCPUBackend` and selected through `compute.Registry`. Registration order is the deterministic dispatch precedence: optimized backends are registered before the scalar fallback.
+
+The initial reference operation set is:
+
+- Elementwise binary: `add`, `sub`, `mul`, `div` (identical shapes).
+- Elementwise unary: `neg`, `exp`, `log`, `relu`.
+- Full reductions: `sum`, `mean`.
+- Rank-2 matrix multiplication: `matmul`.
+
+The reference path supports float32 and float64. Inputs may use non-negative strided layouts; outputs must be contiguous. Integer, complex, float16 and bfloat16 arithmetic, broadcasting, batched matrix multiplication and partial-axis reductions are not implemented in this slice.
+
+### Numerical and cancellation policy
+
+- Element traversal and reductions use deterministic logical row-major order.
+- Float32 inputs are decoded exactly to float64 for scalar calculation and rounded once when stored as float32. Float64 operations retain float64 precision.
+- Reductions and matrix products accumulate in float64 for both supported dtypes, then cast once to the output dtype. This is an explicit first-version accuracy policy, not a promise of bitwise parity with vendor BLAS.
+- Division follows IEEE-754 behavior: zero divisors may produce infinities or NaNs. Logarithms of zero/negative inputs follow Go's `math.Log` behavior. ReLU propagates NaN.
+- Cancellation is checked during long elementwise loops, reductions and matrix products. A cancelled operation may have partially written its caller-provided output; callers must discard or overwrite that output after an error.
+- Different optimized implementations may use different reduction order. They must declare their numerical behavior and pass operation-specific differential tolerances before dispatch is enabled.
+
+### Numerical acceptance policy
+
+The reference backend is deterministic for a fixed input, dtype, operation and build: logical row-major traversal, serial reductions, and float64 intermediate accumulation for both supported dtypes. This does not promise bitwise parity with a parallel reduction or vendor BLAS.
+
+`compute.DefaultTolerance` defines initial differential-test budgets. The comparison is `abs(got-want) <= Abs + Rel*max(abs(got), abs(want))`; NaN matches only NaN, and infinities match only an infinity with the same sign.
+
+| Operation group | float32 (Abs, Rel) | float64 (Abs, Rel) |
+|---|---:|---:|
+| add/sub/mul/div/neg/relu | 1e-6, 1e-5 | 1e-12, 1e-10 |
+| exp/log | 2e-6, 2e-5 | 2e-12, 2e-10 |
+| sum/mean | 2e-5, 2e-5 | 2e-11, 2e-10 |
+| matmul | 5e-5, 5e-5 | 1e-10, 1e-9 |
+
+These are starting acceptance budgets, not claims of universal numerical error bounds. Tests must include cancellation-prone values, mixed magnitudes, subnormals where supported, signed zero, NaN and infinities. Tighten or revise a budget only with reference evidence and documented rationale.
+
+### Invocation and ownership
+
+A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.

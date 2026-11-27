@@ -6,8 +6,13 @@
 - **Repository:** `github.com/adhitiad/gotorch`
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
+<<<<<<< HEAD
 - **Current phase:** P2 — Automatic Differentiation
 - **Current status:** P0 and P1 are closed. P1-001 through P1-011 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. See [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
+=======
+- **Current phase:** P3 — CPU Compute
+- **Current status:** P0, P1 and P2 are implemented and verified. P2 provides a Go-native reverse/forward automatic-differentiation engine, gradient lifecycle, custom VJP/JVP rules and finite-difference checks. The native Go 1.27 matrix passed on Windows AMD64, Linux AMD64 and Linux ARM64; see [Autograd API](AUTOGRAD_API.md), [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
+>>>>>>> origin/main
 
 ---
 ## 1. Project definition
@@ -185,6 +190,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior ([review](P1_API_REVIEW.md)).
 - [x] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles ([review and CI](P1_API_REVIEW.md)).
 - [x] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing ([review and CI](P1_API_REVIEW.md)).
+<<<<<<< HEAD
 - [x] `P01-004` Implement row-major indexing and checked multidimensional offset calculation ([metadata API](TENSOR_API.md#typed-access-and-indexing)).
 - [x] `P01-005` Implement views and define aliasing/overlapping-write rules ([view semantics](TENSOR_API.md#views-and-aliasing)).
 - [x] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations ([view API](TENSOR_API.md#views-and-aliasing)).
@@ -197,37 +203,54 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 **P1 exit gates:** overflow and bounds checks are covered; views retain storage; aliasing behavior is deterministic and documented; scalar, empty, contiguous and non-contiguous cases pass; Linux race tests pass; the native Windows AMD64/Linux AMD64/Linux ARM64 CI matrix passes. The final verification run is [Go CI 45937237974](https://github.com/adhitiad/gotorch/actions/runs/45937237974); benchmark smoke ran on Linux AMD64.
 
 **Accepted limits:** negative strides are not supported; `Reshape` is a view and requires contiguous input; bulk writes to overlapping broadcast layouts return `errs.ErrOverlappingWrite`; custom-storage strided writes are not transactional; the versioned binary snapshot is pre-1.0 and is not a permanent checkpoint compatibility promise. Tensor arithmetic and CPU kernels are later-phase work.
+=======
+- [x] `P01-004` Implement row-major indexing and checked multidimensional offset calculation ([metadata API](TENSOR_API.md#typed-access-and-indexing)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-005` Implement views and define aliasing/overlapping-write rules ([view semantics](TENSOR_API.md#views-and-aliasing)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations ([view API](TENSOR_API.md#views-and-aliasing)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-007` Implement broadcast shape inference and validation ([broadcast API](TENSOR_API.md#views-and-aliasing)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-008` Implement contiguous conversion and explicit copy semantics ([copy API](TENSOR_API.md#copy-and-contiguous-conversion)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-009` Add property tests for indexing, stride, view aliasing and round-trip reshape ([property tests](../src/tensor/metadata_ops_test.go)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-010` Add benchmarks for allocation, view creation, indexing and copy ([benchmarks](../src/tensor/tensor_bench_test.go)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-011` Document public Tensor API and ownership examples ([Tensor API](TENSOR_API.md), [ownership review](P1_TENSOR_OWNERSHIP.md)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+
+**P1 exit gates:** overflow and bounds checks are covered; views retain storage; aliasing behavior is deterministic and documented; scalar, empty, contiguous and non-contiguous cases pass; Linux race tests pass; the native Windows AMD64/Linux AMD64/Linux ARM64 CI matrix passes. The latest follow-up verification for the empty-view fix is [Go CI 45939341927](https://github.com/adhitiad/gotorch/actions/runs/45939341927) and [Documentation validation 45939341916](https://github.com/adhitiad/gotorch/actions/runs/45939341916); the focused fix run is [Go CI 45939252569](https://github.com/adhitiad/gotorch/actions/runs/45939252569). The benchmark smoke job is now part of the canonical Go CI workflow.
+
+**Accepted limits:** negative strides are not supported; `Reshape` is a view and requires contiguous input; bulk writes to overlapping broadcast layouts return `errs.ErrOverlappingWrite`; custom-storage strided writes are not transactional; empty views may retain a base offset past the last reachable source element because they never dereference storage; the versioned binary snapshot is pre-1.0 and is not a permanent checkpoint compatibility promise. Tensor arithmetic and CPU kernels are later-phase work.
+>>>>>>> origin/main
 
 ### P2 — Automatic Differentiation
 
 **Purpose:** provide mathematically correct differentiation that can power neural-network training and custom differentiable operations.
 
-**Deliverables:** graph/tape model, gradient storage, reverse mode, forward-mode foundations, gradient accumulation, backward scheduling and gradient checks.
+**Deliverables:** graph/tape model, gradient storage, reverse mode, forward-mode foundations, gradient accumulation, custom operation registration, finite-difference gradient checks and explicit graph/tensor lifetime contracts.
 
-- [ ] `P02-001` Specify graph node, operation context, saved tensor and graph lifetime contracts.
-- [ ] `P02-002` Implement gradient state and parameter requires-grad semantics.
-- [ ] `P02-003` Implement reverse-mode graph recording and topological backward traversal.
-- [ ] `P02-004` Implement gradient accumulation, zeroing, retention and release behavior.
-- [ ] `P02-005` Implement backward rules for core differentiable tensor operations.
-- [ ] `P02-006` Add custom operation/gradient registration with validation.
-- [ ] `P02-007` Add forward-mode differentiation foundations where API semantics are clear.
-- [ ] `P02-008` Implement finite-difference gradient checker with dtype-aware tolerances.
-- [ ] `P02-009` Test repeated backward, graph release, shared subgraphs and cancellation.
-- [ ] `P02-010` Document gradient lifecycle and unsupported differentiability cases.
+- [x] P02-001 Specify graph node, operation context, saved tensor and graph lifetime contracts ([Autograd API](AUTOGRAD_API.md), [core contracts](CORE_CONTRACTS.md#automatic-differentiation-p2)).
+- [x] P02-002 Implement gradient state and parameter requires-grad semantics (Tape.NewVariable, Variable.RequiresGrad, Variable.Grad).
+- [x] P02-003 Implement reverse-mode graph recording and topological backward traversal (Tape.Apply, Tape.Backward, Tape.BackwardWithGradient).
+- [x] P02-004 Implement gradient accumulation, zeroing, retention and release behavior (ZeroGrad, Tape lifecycle and transactional gradient commit).
+- [x] P02-005 Implement backward rules for core differentiable tensor operations (float32/float64 Add, Mul, Sum).
+- [x] P02-006 Add custom operation/gradient registration with validation (RegisterOperation, VJP result validation and callback ownership rules).
+- [x] P02-007 Add forward-mode differentiation foundations where API semantics are clear (Tape.JVP, optional per-operation Forward rule).
+- [x] P02-008 Implement finite-difference gradient checker with dtype-aware tolerances (CheckGradient, bounded to 256 elements by default).
+- [x] P02-009 Test repeated backward, graph release, shared subgraphs and cancellation ([autograd tests](../src/autograd/)).
+- [x] P02-010 Document gradient lifecycle and unsupported differentiability cases ([Autograd API](AUTOGRAD_API.md)).
 
-**Exit gates:** analytical gradients match finite differences within documented tolerance; no graph/tensor lifetime leaks; repeated backward semantics are explicit; race tests cover supported concurrent use.
+**Exit gates:** analytical gradients match finite differences within dtype-aware tolerances; graph values and gradients have explicit ownership and release behavior; repeated backward accumulates; failures and cancellation do not partially commit gradients; callback results are validated; native Windows AMD64/Linux AMD64/Linux ARM64 CI passes.
 
+**Verification:** [Go CI run 45941641390](https://github.com/adhitiad/gotorch/actions/runs/45941641390) passed on the P2 implementation before final documentation updates: gofmt, go list, go test and go vet on all three platforms; Linux race tests on AMD64 and ARM64; Linux AMD64 benchmark smoke. Documentation validation passed on the P2 PR head before the final checklist synchronization.
+
+**Accepted P2 limits:** only float32 and float64 carry gradients; built-in Add/Mul require identical shapes; Sum reduces all elements to a scalar. No broadcasting-gradient reductions, matrix multiplication, convolution, higher-order derivatives, low-precision/complex gradients, activation checkpointing or parallel backward scheduler are claimed. Built-in arithmetic is a Pure Go reference path; the general CPU kernel registry and optimized dispatch belong to P3.
 ### P3 — CPU Compute
 
 **Purpose:** execute supported tensor operations efficiently while keeping a trusted, portable reference implementation.
 
 **Deliverables:** kernel registry, Pure Go scalar kernels, capability detection, Go SIMD implementations, optional BLAS/LAPACK adapters, dispatch and differential tests. Go 1.27 experimental SIMD is an implementation option, not a stable public API; the scalar fallback remains mandatory. See [CPU Compute Strategy](CPU_COMPUTE.md) and the [Go AI Ecosystem Guide](AI_ECOSYSTEM.md).
 
-- [ ] `P03-001` Define operation registry and kernel selection metadata.
-- [ ] `P03-002` Implement Pure Go reference kernels for core unary and binary operations.
-- [ ] `P03-003` Implement reductions and matrix multiplication reference kernels.
-- [ ] `P03-004` Define numerical tolerance and determinism policy per operation.
-- [ ] `P03-005` Implement runtime CPU feature detection without assuming host capabilities.
+- [x] `P03-001` Define operation registry and kernel selection metadata.
+- [x] `P03-002` Implement Pure Go reference kernels for core unary and binary operations.
+- [x] `P03-003` Implement reductions and matrix multiplication reference kernels.
+- [x] `P03-004` Define operation/dtype-specific absolute-relative differential tolerances, special-value comparison rules and deterministic reference traversal; add policy tests.
+- [x] `P03-005` Implement runtime CPU feature snapshots using `golang.org/x/sys/cpu`, including conservative initialization handling and architecture-specific AVX2/ASIMD/AES flags.
 - [ ] `P03-006` Add architecture-isolated SIMD kernels with scalar fallback.
 - [ ] `P03-007` Add optional BLAS/LAPACK adapter behind build/runtime configuration.
 - [ ] `P03-008` Coordinate BLAS thread count with GoTorch execution policy to prevent oversubscription.
@@ -235,9 +258,9 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P03-010` Benchmark representative shapes, layouts, dtypes and thread counts with `-benchmem`.
 - [ ] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
 
-**Exit gates:** every supported operation has a reference path; unsupported combinations fail clearly; optimized paths pass differential tests; benchmark reports include environment and reproducible commands.
+**Current implementation slice:** P03-001 through P03-003 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise operations, full reductions and rank-2 matrix multiplication. The CPU compute guide records the determinism/cancellation policy and quantified initial operation/dtype tolerance budgets. Runtime CPU capability snapshots are exposed by `compute.DetectCPUFeatures`; detection does not itself enable SIMD dispatch. The initial dtype/layout boundary is float32/float64 with strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
 
-**Current engineering priority after P1:** Pure Go CPU reference kernels first, SIMD dispatch and validated architecture-specific kernels second, optional BLAS/LAPACK adapters third. GPU and distributed acceleration are not prerequisites for P3.
+**Verification:** [PR #15 Go CI](https://github.com/adhitiad/gotorch/actions/runs/45944890809) passed gofmt, go list, go test and go vet on Windows AMD64, Linux AMD64 and Linux ARM64; Linux race tests passed on both architectures, and benchmark smoke passed on Linux AMD64. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45944890804) also passed. The post-merge main-branch workflow is tracked separately. Operation-specific tolerance budgets, CPU feature detection, SIMD dispatch, optional BLAS/LAPACK, thread coordination, optimized-kernel differential tests and benchmark suites remain open P3 tasks. GPU and distributed acceleration are not prerequisites for P3.
 
 ### P4 — Scheduler & Memory Engine
 

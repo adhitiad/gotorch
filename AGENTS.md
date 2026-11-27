@@ -5,12 +5,12 @@ These instructions are the repository-wide contract for every human or coding ag
 ## 1. Project identity and architecture
 
 - GoTorch is a Go-native **full deep-learning and numerical-computing framework**: tensors, autograd, neural networks, optimizers, data, CPU compute, compiler, training, inference, quantization, model interoperability and distributed compute.
-- Module: `github.com/adhitiad/gotorch`. The declared Go toolchain baseline is in `go.mod`.
+- Module: `github.com/adhitiad/gotorch`; Go version is declared in `go.mod` (currently `go 1.27.4`).
 - **Hybrid CPU:** Pure Go is the correctness/portability reference. SIMD and BLAS/LAPACK are optional optimized paths.
 - **Distributed by design:** distributed contracts are first-class; ordinary local operations must not incur network overhead.
 - Platforms: **Windows AMD64 primary**; Linux AMD64 and Linux ARM64 compatibility.
 - No mandatory GPU/CUDA/DirectML/CGo/vendor SDK in core.
-- Do not claim a capability is implemented merely because an interface, package, config entry or document exists.
+- Do not claim a capability is implemented merely because an interface, package, config entry or document exists. For P0 status, use `docs/TASK.md` as the canonical checklist.
 
 ## 2. Canonical task and instruction sources
 
@@ -72,7 +72,7 @@ Run focused tests while iterating; run all relevant checks before reporting comp
 ```bash
 gofmt -w .
 go test ./...
-go test -race ./...
+go test -race ./...           # concurrency-sensitive; CI runs race on Linux only
 go vet ./...
 go test -bench=. -benchmem ./...
 GOOS=windows GOARCH=amd64 go build ./...
@@ -80,7 +80,9 @@ GOOS=linux GOARCH=amd64 go build ./...
 GOOS=linux GOARCH=arm64 go build ./...
 ```
 
-Use the Go version declared by `go.mod`. CI in `.github/workflows/ci.yml` is the source of truth for native platform verification. Local cross-builds do not replace native CI.
+- `Makefile` wrappers: `make fmt|test|race|vet|check|bench` (`check=test+vet`).
+- No `golangci-lint`, typecheck, or codegen config is present; do not invent them.
+- CI (`.github/workflows/ci.yml`) is the native verification source of truth: Windows AMD64, Linux AMD64, Linux ARM64 (`ubuntu-24.04-arm`), Go `1.27.x`; runs `go test ./...`, `go vet ./...`, and `go test -race ./...` on Linux. Push branches: `main`, `adhitiad_gpt`. Local cross-builds do not replace native CI.
 
 ## 7. Definition of done
 

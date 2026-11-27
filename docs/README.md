@@ -8,6 +8,10 @@
 - [Memory Model](MEMORY_MODEL.md)
 - [Security](SECURITY.md)
 
+## API and subsystem guides
+- [Tensor API (P1)](TENSOR_API.md)
+- [Autograd API (P2)](AUTOGRAD_API.md)
+
 ## Planning
 - [Roadmap P0–P13](ROADMAP.md)
 - [Development Workflow](DEVELOPMENT.md)

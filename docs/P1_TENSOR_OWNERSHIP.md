@@ -1,6 +1,10 @@
 # P1 Tensor Engine — Ownership, Views and Data Semantics
 
+<<<<<<< HEAD
 > P01-001 through P01-011 are implemented and reviewed on `adhitiad_gpt`. The full native matrix and Linux AMD64 benchmark smoke passed in [Go CI run 45937237974](https://github.com/adhitiad/gotorch/actions/runs/45937237974); see [P1 API Review](P1_API_REVIEW.md) for the closure decision.
+=======
+> P01-001 through P01-011 are implemented and reviewed. The empty-view follow-up passed the native Go CI matrix in [Go CI run 45939341927](https://github.com/adhitiad/gotorch/actions/runs/45939341927); see [P1 API Review](P1_API_REVIEW.md) for the complete review record and accepted limits.
+>>>>>>> origin/main
 
 ## Ownership and lifecycle
 
@@ -36,6 +40,7 @@
 - `BroadcastTo` right-aligns dimensions; expanded dimensions use zero strides.
 - Every Tensor view retains its backing allocation independently. Mutations are visible through every alias.
 - Negative strides are not supported. Empty, scalar, contiguous and positive-stride non-contiguous tensors are supported.
+- An empty view has no addressable element, so its base offset may sit at or past the source's last reachable element (for example the end position of a positive-step slice). Reads and writes on an empty view are empty operations and never access storage.
 - Bulk `Write` rejects overlapping or conservatively uncertain layouts with `errs.ErrOverlappingWrite` before changing any element. `Set` remains deterministic for one explicit logical index, including on broadcast aliases.
 - For non-overlapping strided layouts, bulk Write scatters row-major logical values to their physical locations. A custom Storage failure during a scatter may leave earlier elements written; there is no multi-element transaction guarantee.
 
