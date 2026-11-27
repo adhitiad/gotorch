@@ -84,3 +84,16 @@ func TestManagerRejectsDuplicateNames(t *testing.T) {
 		t.Fatal("duplicate component name accepted")
 	}
 }
+
+type nilTestComponent struct{}
+
+func (*nilTestComponent) Name() string              { return "nil" }
+func (*nilTestComponent) Start(context.Context) error { return nil }
+func (*nilTestComponent) Stop(context.Context) error  { return nil }
+
+func TestManagerRejectsTypedNilComponent(t *testing.T) {
+	var component *nilTestComponent
+	if _, err := NewManager(component); !errors.Is(err, errs.ErrInvalidArgument) {
+		t.Fatalf("got %v, want ErrInvalidArgument", err)
+	}
+}
