@@ -83,6 +83,9 @@ func (s *heapStorage) Retain() (Storage, error) {
 	if a.released || a.references <= 0 {
 		return nil, errs.ErrStorageReleased
 	}
+	if a.references == int64(^uint64(0)>>1) {
+		return nil, errs.ErrShapeOverflow
+	}
 	a.references++
 	return &heapStorage{allocation: a}, nil
 }

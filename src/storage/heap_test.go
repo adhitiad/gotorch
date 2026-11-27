@@ -6,6 +6,7 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"sync"
 
 	"github.com/adhitiad/gotorch/src/errs"
 )
@@ -85,5 +86,58 @@ func TestHeapAllocatorValidatesArgumentsAndContext(t *testing.T) {
 	}
 	if err := empty.Release(); err != nil {
 		t.Fatalf("release zero-byte allocation: %v", err)
+	}
+}
+
+func TestHeapStorageConcurrentDisjointWrites(t *testing.T) {
+	const size = 32
+	base, err := NewHeapAllocator().Allocate(context.Background(), size)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer base.Release()
+
+	handles := make([]Storage, size)
+	for i := range handles {
+		handles[i], err = base.Retain()
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+
+	start := make(chan struct{})
+	errorsFound := make(chan error, size)
+	var workers sync.WaitGroup
+	for i, handle := range handles {
+		workers.Add(1)
+		go func(index int, storageHandle Storage) {
+			defer workers.Done()
+			<-start
+			n, writeErr := storageHandle.WriteAt([]byte{byte(index + 1)}, int64(index))
+			if writeErr != nil {
+				errorsFound <- writeErr
+			} else if n != 1 {
+				errorsFound <- io.ErrShortWrite
+			}
+			if releaseErr := storageHandle.Release(); releaseErr != nil {
+				errorsFound <- releaseErr
+			}
+		}(i, handle)
+	}
+	close(start)
+	workers.Wait()
+	close(errorsFound)
+	for err := range errorsFound {
+		t.Error(err)
+	}
+
+	got := make([]byte, size)
+	if n, err := base.ReadAt(got, 0); err != nil || n != size {
+		t.Fatalf("ReadAt = %d, %v; want %d, nil", n, err, size)
+	}
+	for i, value := range got {
+		if value != byte(i+1) {
+			t.Fatalf("byte[%d] = %d, want %d", i, value, i+1)
+		}
 	}
 }
