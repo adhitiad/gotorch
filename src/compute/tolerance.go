@@ -20,16 +20,24 @@ func DefaultTolerance(operation string, dt dtype.DType) (Tolerance, bool) {
 	}
 	switch operation {
 	case OpAdd, OpSub, OpMul, OpDiv, OpNeg, OpReLU:
-		if dt == dtype.Float32 { return Tolerance{Abs: 1e-6, Rel: 1e-5}, true }
+		if dt == dtype.Float32 {
+			return Tolerance{Abs: 1e-6, Rel: 1e-5}, true
+		}
 		return Tolerance{Abs: 1e-12, Rel: 1e-10}, true
 	case OpExp, OpLog:
-		if dt == dtype.Float32 { return Tolerance{Abs: 2e-6, Rel: 2e-5}, true }
+		if dt == dtype.Float32 {
+			return Tolerance{Abs: 2e-6, Rel: 2e-5}, true
+		}
 		return Tolerance{Abs: 2e-12, Rel: 2e-10}, true
 	case OpSum, OpMean:
-		if dt == dtype.Float32 { return Tolerance{Abs: 2e-5, Rel: 2e-5}, true }
+		if dt == dtype.Float32 {
+			return Tolerance{Abs: 2e-5, Rel: 2e-5}, true
+		}
 		return Tolerance{Abs: 2e-11, Rel: 2e-10}, true
 	case OpMatMul:
-		if dt == dtype.Float32 { return Tolerance{Abs: 5e-5, Rel: 5e-5}, true }
+		if dt == dtype.Float32 {
+			return Tolerance{Abs: 5e-5, Rel: 5e-5}, true
+		}
 		return Tolerance{Abs: 1e-10, Rel: 1e-9}, true
 	default:
 		return Tolerance{}, false
@@ -45,9 +53,15 @@ func (t Tolerance) Valid() bool {
 // Close reports whether got and want satisfy this tolerance. NaNs compare equal only
 // to NaNs; infinities compare equal only when their signs match.
 func (t Tolerance) Close(got, want float64) bool {
-	if !t.Valid() { return false }
-	if math.IsNaN(got) || math.IsNaN(want) { return math.IsNaN(got) && math.IsNaN(want) }
-	if math.IsInf(got, 0) || math.IsInf(want, 0) { return got == want }
+	if !t.Valid() {
+		return false
+	}
+	if math.IsNaN(got) || math.IsNaN(want) {
+		return math.IsNaN(got) && math.IsNaN(want)
+	}
+	if math.IsInf(got, 0) || math.IsInf(want, 0) {
+		return got == want
+	}
 	diff := math.Abs(got - want)
 	scale := math.Max(math.Abs(got), math.Abs(want))
 	return diff <= t.Abs+t.Rel*scale
