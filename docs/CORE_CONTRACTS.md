@@ -95,3 +95,13 @@ Public APIs document error behavior, concurrency safety, mutation, ownership, dt
 - `platform`: primary and compatibility target classification.
 
 See [`P0_IMPLEMENTATION.md`](P0_IMPLEMENTATION.md) for P0 limits and exit gates, and [`TASK.md`](TASK.md) for P1 task status.
+
+
+## CPU compute (P3 initial slice)
+
+- `compute.Registry` dispatches to the first registered backend that supports the operation signature. Registration order is stable and is the precedence rule.
+- `compute.ReferenceCPUBackend` is the mandatory Pure Go scalar baseline for float32/float64 elementwise arithmetic, unary math, full sum/mean reductions and rank-2 matrix multiplication.
+- Reference kernels accept strided input metadata and require contiguous caller-owned outputs. They do not broadcast shapes or allocate storage.
+- Reductions and matrix products accumulate in float64 and cast once to the output dtype; traversal order is logical row-major and deterministic.
+- IEEE-754 division/log behavior is retained; ReLU propagates NaN. Cancellation may leave a caller-provided output partially written, so failed outputs must be discarded or overwritten.
+- SIMD and BLAS backends are optional and must be registered ahead of the scalar backend only after capability checks, numerical differential tests and reproducible benchmarks.
