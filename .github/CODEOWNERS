@@ -1,0 +1,8 @@
+# Repository-wide ownership. Replace this placeholder with a team when one exists.
+* @adhitiad
+
+# Governance, release, and security changes require maintainer attention.
+/community/ @adhitiad
+/.github/ @adhitiad
+/.agent/ @adhitiad
+/docs/ @adhitiad
