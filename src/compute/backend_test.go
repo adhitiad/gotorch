@@ -99,7 +99,7 @@ type nilContext struct{}
 func (*nilContext) Deadline() (time.Time, bool) { return time.Time{}, false }
 func (*nilContext) Done() <-chan struct{}       { return nil }
 func (*nilContext) Err() error                  { return nil }
-func (*nilContext) Value(any) any                { return nil }
+func (*nilContext) Value(any) any               { return nil }
 
 func TestRunRejectsUnsupportedBackend(t *testing.T) {
 	s, _ := shape.New(1)
