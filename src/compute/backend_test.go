@@ -5,6 +5,7 @@ import (
 	"errors"
 	"io"
 	"testing"
+	"time"
 
 	"github.com/adhitiad/gotorch/src/dtype"
 	"github.com/adhitiad/gotorch/src/errs"
@@ -50,6 +51,16 @@ func TestInvocationValidatesStorageSpan(t *testing.T) {
 	}
 }
 
+func TestArgumentRejectsTypedNilStorage(t *testing.T) {
+	s, _ := shape.New(1)
+	m, _ := tensor.NewMetadata(dtype.Float32, s)
+	var backing *testStorage
+	err := (Argument{Metadata: m, Storage: backing}).Validate()
+	if !errors.Is(err, errs.ErrInvalidArgument) {
+		t.Fatalf("got %v, want ErrInvalidArgument", err)
+	}
+}
+
 func TestRunValidatesBeforeBackend(t *testing.T) {
 	ctx := context.Background()
 	s, _ := shape.New(1)
@@ -65,6 +76,30 @@ func TestRunValidatesBeforeBackend(t *testing.T) {
 		t.Fatal("cancelled execution accepted")
 	}
 }
+
+func TestRunRejectsTypedNilDependencies(t *testing.T) {
+	s, _ := shape.New(1)
+	m, _ := tensor.NewMetadata(dtype.Float32, s)
+	arg := Argument{Metadata: m, Storage: &testStorage{size: 4}}
+	spec := KernelSpec{Operation: "identity", DType: dtype.Float32, Layout: tensor.LayoutContiguous}
+
+	var backend *testBackend
+	if err := Run(context.Background(), backend, spec, Invocation{Outputs: []Argument{arg}}); !errors.Is(err, errs.ErrInvalidArgument) {
+		t.Fatalf("typed-nil backend: got %v, want ErrInvalidArgument", err)
+	}
+
+	var ctx *nilContext
+	if err := Run(ctx, testBackend{}, spec, Invocation{Outputs: []Argument{arg}}); !errors.Is(err, errs.ErrInvalidArgument) {
+		t.Fatalf("typed-nil context: got %v, want ErrInvalidArgument", err)
+	}
+}
+
+type nilContext struct{}
+
+func (*nilContext) Deadline() (time.Time, bool) { return time.Time{}, false }
+func (*nilContext) Done() <-chan struct{}       { return nil }
+func (*nilContext) Err() error                  { return nil }
+func (*nilContext) Value(any) any               { return nil }
 
 func TestRunRejectsUnsupportedBackend(t *testing.T) {
 	s, _ := shape.New(1)

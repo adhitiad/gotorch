@@ -5,6 +5,7 @@ package compute
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"strings"
 
 	"github.com/adhitiad/gotorch/src/dtype"
@@ -56,7 +57,7 @@ type Argument struct {
 
 // Validate checks metadata and verifies its full strided byte span fits storage.
 func (a Argument) Validate() error {
-	if a.Storage == nil {
+	if isNilInterface(a.Storage) {
 		return fmt.Errorf("%w: nil storage", errs.ErrInvalidArgument)
 	}
 	if err := a.Metadata.Validate(); err != nil {
@@ -105,7 +106,7 @@ type Backend interface {
 
 // Run validates the call before handing borrowed storage to a backend.
 func Run(ctx context.Context, backend Backend, spec KernelSpec, invocation Invocation) error {
-	if ctx == nil || backend == nil {
+	if isNilInterface(ctx) || isNilInterface(backend) {
 		return fmt.Errorf("%w: context and backend are required", errs.ErrInvalidArgument)
 	}
 	if strings.TrimSpace(backend.Name()) == "" || !backend.Kind().Valid() {
@@ -124,4 +125,17 @@ func Run(ctx context.Context, backend Backend, spec KernelSpec, invocation Invoc
 		return fmt.Errorf("%w: backend %q does not support %q", errs.ErrUnsupportedBackend, backend.Name(), spec.Operation)
 	}
 	return backend.Execute(ctx, spec, invocation)
+}
+
+func isNilInterface(value any) bool {
+	if value == nil {
+		return true
+	}
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return v.IsNil()
+	default:
+		return false
+	}
 }
