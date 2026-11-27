@@ -5,6 +5,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/adhitiad/gotorch/src/errs"
 )
 
 type testComponent struct {
@@ -87,9 +89,13 @@ func TestManagerRejectsDuplicateNames(t *testing.T) {
 
 type nilTestComponent struct{}
 
-func (*nilTestComponent) Name() string              { return "nil" }
-func (*nilTestComponent) Start(context.Context) error { return nil }
-func (*nilTestComponent) Stop(context.Context) error  { return nil }
+func (*nilTestComponent) Name() string { return "nil" }
+func (*nilTestComponent) Start(context.Context) error {
+	return nil
+}
+func (*nilTestComponent) Stop(context.Context) error {
+	return nil
+}
 
 func TestManagerRejectsTypedNilComponent(t *testing.T) {
 	var component *nilTestComponent
