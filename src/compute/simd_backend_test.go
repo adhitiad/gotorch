@@ -81,6 +81,12 @@ func TestSIMDBackendDifferentialAgainstReference(t *testing.T) {
 					aValues[i] = (rng.Float64()*2 - 1) * math.Pow10(rng.Intn(12)-6)
 					bValues[i] = (rng.Float64()*2 - 1) * math.Pow10(rng.Intn(12)-6)
 				}
+				// Exercise IEEE-754 edge values in vector lanes as well as random magnitudes.
+				aValues[0], bValues[0] = math.Copysign(0, -1), 0
+				aValues[1], bValues[1] = math.Inf(1), 2
+				aValues[2], bValues[2] = math.Inf(-1), math.Inf(1)
+				aValues[3], bValues[3] = math.NaN(), 1
+				aValues[4], bValues[4] = math.SmallestNonzeroFloat64, 2
 				a, b := typedFloatArg(t, dt, aValues), typedFloatArg(t, dt, bValues)
 				simdOut, refOut := typedFloatOutput(t, dt, count), typedFloatOutput(t, dt, count)
 				spec := KernelSpec{Operation: operation, DType: dt, Layout: tensor.LayoutContiguous}
@@ -122,5 +128,23 @@ func TestDefaultCPURegistryAlwaysHasScalarFallback(t *testing.T) {
 	names := registry.Backends()
 	if len(names) == 0 || names[len(names)-1] != "purego-reference" {
 		t.Fatalf("backend order=%v, scalar fallback must be last", names)
+	}
+}
+
+func TestDefaultCPURegistryRoutesUnsupportedOperationsToReference(t *testing.T) {
+	registry, err := NewDefaultCPURegistry()
+	if err != nil {
+		t.Fatal(err)
+	}
+	input := floatArg(t, []float64{1}, 1)
+	output := outputArg(t)
+	call := Invocation{Inputs: []Argument{input}, Outputs: []Argument{output}}
+	spec := KernelSpec{Operation: OpExp, DType: dtype.Float64, Layout: tensor.LayoutContiguous}
+	selected, err := registry.Select(spec, call)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if selected.Kind() != BackendReference {
+		t.Fatalf("selected backend %q, want scalar reference for unsupported SIMD operation", selected.Name())
 	}
 }
