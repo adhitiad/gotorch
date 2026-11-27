@@ -18,29 +18,29 @@ type ScalarFunction func(context.Context, *Tape, *Variable) (*Variable, error)
 // GradientCheckOptions controls central finite differences. Zero values select
 // dtype-aware defaults. MaxElements bounds the O(n) function evaluations.
 type GradientCheckOptions struct {
-	Step               float64
-	AbsoluteTolerance  float64
-	RelativeTolerance  float64
-	MaxElements        int
+	Step              float64
+	AbsoluteTolerance float64
+	RelativeTolerance float64
+	MaxElements       int
 }
 
 // GradientElement contains the analytical and numerical derivative for one
 // row-major logical input element.
 type GradientElement struct {
-	Index          int64
-	Analytical     float64
-	Numerical      float64
-	AbsoluteError  float64
-	RelativeError  float64
+	Index         int64
+	Analytical    float64
+	Numerical     float64
+	AbsoluteError float64
+	RelativeError float64
 }
 
 // GradientCheckResult summarizes a finite-difference comparison.
 type GradientCheckResult struct {
-	Passed          bool
-	CheckedElements int
+	Passed           bool
+	CheckedElements  int
 	MaxAbsoluteError float64
 	MaxRelativeError float64
-	Elements        []GradientElement
+	Elements         []GradientElement
 }
 
 // CheckGradient compares reverse-mode gradients with central finite differences.
