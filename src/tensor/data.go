@@ -166,7 +166,11 @@ func encodeElements[T Element](values []T) ([]byte, error) {
 		}
 		return raw, nil
 	case []complex64:
-		raw := make([]byte, len(typed)*8)
+		length, err := checkedByteLength(len(typed), 8)
+		if err != nil {
+			return nil, err
+		}
+		raw := make([]byte, length)
 		for i, value := range typed {
 			offset := i * 8
 			binary.LittleEndian.PutUint32(raw[offset:], math.Float32bits(real(value)))
@@ -174,7 +178,11 @@ func encodeElements[T Element](values []T) ([]byte, error) {
 		}
 		return raw, nil
 	case []complex128:
-		raw := make([]byte, len(typed)*16)
+		length, err := checkedByteLength(len(typed), 16)
+		if err != nil {
+			return nil, err
+		}
+		raw := make([]byte, length)
 		for i, value := range typed {
 			offset := i * 16
 			binary.LittleEndian.PutUint64(raw[offset:], math.Float64bits(real(value)))
@@ -188,6 +196,14 @@ func encodeElements[T Element](values []T) ([]byte, error) {
 		}
 		return buffer.Bytes(), nil
 	}
+}
+
+func checkedByteLength(elements, width int) (int, error) {
+	maxInt := int(^uint(0) >> 1)
+	if elements < 0 || width <= 0 || elements > maxInt/width {
+		return 0, errs.ErrShapeOverflow
+	}
+	return elements * width, nil
 }
 
 func decodeElements[T Element](raw []byte) ([]T, error) {

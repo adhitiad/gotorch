@@ -63,9 +63,10 @@ func NewTensorWithAllocator(allocator storage.Allocator, elementType dtype.DType
 	if nilDependency(handle) {
 		return nil, fmt.Errorf("%w: allocator returned a nil storage handle", errs.ErrInvalidState)
 	}
-	if handle.Size() != size {
+	actualSize := handle.Size()
+	if actualSize != size {
 		_ = handle.Release()
-		return nil, fmt.Errorf("%w: allocator returned %d bytes, requested %d", errs.ErrInvalidState, handle.Size(), size)
+		return nil, fmt.Errorf("%w: allocator returned %d bytes, requested %d", errs.ErrInvalidState, actualSize, size)
 	}
 	return &Tensor{metadata: metadata, storage: handle}, nil
 }

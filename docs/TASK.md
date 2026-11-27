@@ -1,6 +1,6 @@
 # GoTorch Engineering Task Plan — P0 to P13
 
-> **This is the canonical phase checklist for humans and coding agents.**  
+> **This is the canonical phase checklist for humans and coding agents.**
 > Project instructions: [`/AGENTS.md`](../AGENTS.md) · Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md) · Contracts: [`CORE_CONTRACTS.md`](CORE_CONTRACTS.md) · Detailed phase overview: [`ROADMAP.md`](ROADMAP.md)
 
 - **Repository:** `github.com/adhitiad/gotorch`

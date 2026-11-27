@@ -79,7 +79,11 @@ func TestHeapAllocatorValidatesArgumentsAndContext(t *testing.T) {
 	if _, err := allocator.Allocate(ctx, 1); !errors.Is(err, context.Canceled) {
 		t.Fatalf("cancelled allocation error = %v", err)
 	}
-	if _, err := allocator.Allocate(context.Background(), 0); err != nil {
+	empty, err := allocator.Allocate(context.Background(), 0)
+	if err != nil {
 		t.Fatalf("zero-byte allocation: %v", err)
+	}
+	if err := empty.Release(); err != nil {
+		t.Fatalf("release zero-byte allocation: %v", err)
 	}
 }

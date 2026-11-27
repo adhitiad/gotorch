@@ -1,4 +1,4 @@
-// Package tensor defines metadata contracts. Tensor allocation and operators belong to P1.
+// Package tensor provides checked tensor metadata and owning tensor values.
 package tensor
 
 import (

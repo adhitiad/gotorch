@@ -1,4 +1,3 @@
-// Package storage defines ownership-aware byte storage contracts.
 package storage
 
 import (
@@ -35,7 +34,7 @@ func (a *HeapAllocator) Allocate(ctx context.Context, size int64) (Storage, erro
 	}
 
 	allocation := &heapAllocation{
-		data:      make([]byte, int(size)),
+		data:       make([]byte, int(size)),
 		references: 1,
 	}
 	return &heapStorage{allocation: allocation}, nil
