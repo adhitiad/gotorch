@@ -48,7 +48,7 @@ GoTorch will provide first-party Go implementations of the major workflows commo
 
 ## Current implementation checkpoint
 
-The near-term compute emphasis is CPU-first: Pure Go correctness kernels, SIMD acceleration with safe fallback, then optional BLAS/LAPACK. The [Go AI Ecosystem Guide](AI_ECOSYSTEM.md) lists reusable external Go modules as research/reference options; they are not GoTorch core dependencies or substitutes for the first-party Go implementations planned above.
+P0 Foundation, P1 Tensor Engine and P2 Automatic Differentiation are implemented. The next implementation phase is P3 CPU Compute: Pure Go reference kernels first, then safe SIMD acceleration and optional BLAS/LAPACK. The [Go AI Ecosystem Guide](AI_ECOSYSTEM.md) lists reusable external Go modules as research/reference options; they are not GoTorch core dependencies or substitutes for the first-party Go implementations planned above.
 
 P0 contracts exist for errors, dtype, shape, tensor metadata, storage, compute backend, runtime lifecycle, distributed identity and platform policy. The reusable Go packages are being organized under `src/`; see [P0 implementation](P0_IMPLEMENTATION.md).
 
