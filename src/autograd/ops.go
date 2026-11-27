@@ -21,6 +21,9 @@ func builtinOperations() []Operation {
 // shapes and dtypes; broadcasted arithmetic is intentionally left to a later
 // compute/API task so its gradient reduction semantics can be designed once.
 func (t *Tape) Add(left, right *Variable) (*Variable, error) {
+	if t == nil {
+		return nil, errs.ErrInvalidArgument
+	}
 	leftValue, err := left.Value()
 	if err != nil {
 		return nil, err
@@ -41,6 +44,9 @@ func (t *Tape) Add(left, right *Variable) (*Variable, error) {
 
 // Mul records element-wise multiplication for equal-shaped float32/float64 tensors.
 func (t *Tape) Mul(left, right *Variable) (*Variable, error) {
+	if t == nil {
+		return nil, errs.ErrInvalidArgument
+	}
 	leftValue, err := left.Value()
 	if err != nil {
 		return nil, err
@@ -61,6 +67,9 @@ func (t *Tape) Mul(left, right *Variable) (*Variable, error) {
 
 // Sum records a reduction over every input element and returns a rank-zero scalar.
 func (t *Tape) Sum(input *Variable) (*Variable, error) {
+	if t == nil {
+		return nil, errs.ErrInvalidArgument
+	}
 	value, err := input.Value()
 	if err != nil {
 		return nil, err
@@ -181,6 +190,9 @@ func fillLike(reference *tensor.Tensor, scalar float64) (*tensor.Tensor, error) 
 	numel, err := metadata.Numel()
 	if err != nil {
 		return nil, err
+	}
+	if uint64(numel) > uint64(^uint(0)>>1) {
+		return nil, errs.ErrShapeOverflow
 	}
 	values := make([]float64, int(numel))
 	for i := range values {
