@@ -170,7 +170,7 @@ func (m Metadata) isContiguous() bool {
 		if dims[axis] > 1 && expected > maxInt64/dims[axis] {
 			return false
 		}
-	expected *= dims[axis]
+		expected *= dims[axis]
 	}
 	return true
 }
