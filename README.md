@@ -1,16 +1,16 @@
 # GoTorch
 
-**Go-native universal deep learning and computing framework.**
+**Go-native deep-learning and computing framework.**
 
 GoTorch is designed as a full deep-learning framework with a CPU-first hybrid compute engine and first-class distributed-computing architecture.
 
-> Project status: architecture and foundation specification. This repository scaffold does not claim that P0–P13 implementations are complete.
+> **Project status:** architecture and foundation scaffold. P0–P13 implementation status must be verified against code, tests, and phase exit criteria; this repository does not claim the full framework is complete.
 
 ## Fundamental decisions
 
-- **Scope:** full framework — tensors, automatic differentiation, neural networks, optimizers, training, inference, compiler, quantization, and distributed computing.
+- **Scope:** tensors, automatic differentiation, neural networks, optimizers, training, inference, compiler, quantization, interoperability, and distributed computing.
 - **Compute:** hybrid CPU — Pure Go reference kernels, architecture-specific SIMD, and optional BLAS/LAPACK adapters.
-- **Distributed:** first-class by design — multi-process and multi-node execution, collectives, distributed training, checkpointing, and recovery.
+- **Distributed:** first-class in architecture, without imposing network overhead on local execution.
 - **Platforms:** Windows AMD64 primary; Linux AMD64 and Linux ARM64 compatibility.
 - **Accelerators:** optional future extensions. GPU is not a core dependency or early implementation priority.
 - **Module path:** `github.com/adhitiad/gotorch`.
@@ -38,8 +38,10 @@ Storage · RAM · Cache · NUMA · Network
 
 - [`AGENTS.md`](AGENTS.md): mandatory instructions for coding agents.
 - [`.agent/`](.agent/): agent rules, skills, workflows, and task templates.
-- [`docs/`](docs/): architecture, decisions, roadmap, design contracts, and engineering standards.
-- [`.github/workflows/`](.github/workflows/): CI workflows.
+- [`docs/`](docs/): architecture, contracts, roadmap, decisions, and engineering standards.
+- [`community/`](community/): governance, conduct, support, security, and release policy.
+- [`.github/`](.github/): issue forms, pull request template, ownership, dependency updates, and CI workflows.
+- [`CONTRIBUTING.md`](CONTRIBUTING.md): contributor workflow.
 
 ## Roadmap
 
@@ -60,15 +62,15 @@ Storage · RAM · Cache · NUMA · Network
 | P12 | Developer Ecosystem and Tooling |
 | P13 | Performance, Security, and Production |
 
-See [`docs/ROADMAP.md`](docs/ROADMAP.md) for phase deliverables and exit criteria.
+See [`docs/ROADMAP.md`](docs/ROADMAP.md) for deliverables and exit criteria. See [`docs/PROJECT_CHARTER.md`](docs/PROJECT_CHARTER.md) for the mission, problem statement, rationale for Go, scope, and non-goals.
 
 ## Development status
 
-This is a documentation-first foundation scaffold. No production tensor kernels, autograd engine, compiler, or distributed runtime are claimed to exist yet. Implement each phase behind tested contracts; do not create empty packages merely to match the target tree.
+This is a documentation-first foundation scaffold. Do not infer that production tensor kernels, autograd, compiler, or distributed runtime exist merely because their architecture is documented. Implement phases behind tested contracts and update the roadmap only when acceptance criteria are met.
 
-## Go toolchain
+## Toolchain
 
-The module language baseline is Go 1.23.0 for broad compatibility. CI uses the current Go 1.27 patch line. For development and production, use a currently supported Go toolchain; see the official [Go release history](https://go.dev/doc/devel/release).
+The module's declared Go language/toolchain baseline is recorded in [`go.mod`](go.mod). Use a supported Go release compatible with that declaration. CI is the source of truth for the tested version matrix.
 
 ## Initial commands
 
@@ -79,6 +81,10 @@ go vet ./...
 go test -bench=. -benchmem ./...
 ```
 
+## Governance and contribution
+
+Read [`community/GOVERNANCE.md`](community/GOVERNANCE.md), [`community/CODE_OF_CONDUCT.md`](community/CODE_OF_CONDUCT.md), [`community/SECURITY.md`](community/SECURITY.md), and [`community/RELEASE_PROCESS.md`](community/RELEASE_PROCESS.md). Questions belong in GitHub Discussions; reproducible defects and proposals belong in the matching issue forms.
+
 ## License
 
-License selection is intentionally pending. Do not publish or redistribute this project under an assumed license; obtain an explicit project-owner decision first.
+GoTorch is licensed under the [MIT License](LICENSE).
