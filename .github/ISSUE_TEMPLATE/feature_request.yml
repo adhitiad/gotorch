@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose a capability with a clear use case.
+title: "[feature]: "
+labels: ["type: feature", "status: triage"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and user impact
+      description: What cannot users do today?
+    validations:
+      required: true
+  - type: textarea
+    id: proposal
+    attributes:
+      label: Proposed behavior
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered
+  - type: dropdown
+    id: area
+    attributes:
+      label: Area
+      options: ["Tensor", "Autograd", "CPU compute", "Memory/runtime", "Neural networks", "Data", "Compiler", "Distributed", "Interoperability", "Tooling", "Other"]
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: List observable, testable outcomes.
+    validations:
+      required: true
