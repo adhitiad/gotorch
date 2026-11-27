@@ -1,6 +1,6 @@
 # P0 — Foundation Implementation
 
-**Status: implementation present; final verification after the `src/` migration and maintainer API review remain open.** This phase defines the stable contracts on which later work depends. It does not complete the full framework.
+**Status: source-layout migration and native three-platform CI passed; maintainer API review remains open.** This phase defines the stable contracts on which later work depends. It does not complete the full framework.
 
 ## Scope delivered
 
@@ -72,7 +72,7 @@ The P0 foundation-contract commit `d5f0af9a039635320fd6b1622c2b33b4ce2640a7` pas
 - [x] Documentation describes the contracts and explicitly states P0 non-goals.
 - [x] Native Windows AMD64, Linux AMD64 and Linux ARM64 CI passed for the pre-migration P0 commit.
 - [x] Root task/agent workflow and portable skill directory are defined.
-- [ ] The new `src/` package layout passes fresh native Windows AMD64, Linux AMD64 and Linux ARM64 CI.
+- [x] The new `src/` package layout passes fresh native Windows AMD64, Linux AMD64 and Linux ARM64 CI ([run `45930296453`](https://github.com/adhitiad/gotorch/actions/runs/45930296453), commit `9132cee59991908c08691287689f51f753aa4626)).
 - [ ] Maintainer review of exported contracts, edge cases and API stability is complete.
 - [ ] P0 checklist in [`TASK.md`](TASK.md) is reviewed and phase closure is approved.
 

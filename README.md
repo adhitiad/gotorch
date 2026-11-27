@@ -4,7 +4,7 @@
 
 GoTorch is designed as a full deep-learning framework with a CPU-first hybrid compute engine and first-class distributed-computing architecture.
 
-> **Project status:** P0 foundation contracts have been implemented. The repository is completing a source-layout migration and post-migration CI verification. The full Tensor Engine, autograd system, CPU kernel library, and distributed runtime are not yet complete. See [the P0 checkpoint](docs/P0_IMPLEMENTATION.md) and [the canonical P0–P13 task plan](docs/TASK.md).
+> **Project status:** P0 foundation contracts and the `src/` source-layout migration have passed native CI on Windows AMD64, Linux AMD64 and Linux ARM64. Maintainer review of public contracts remains before P0 closure. The full Tensor Engine, autograd system, CPU kernel library, and distributed runtime are not yet complete. See [the P0 checkpoint](docs/P0_IMPLEMENTATION.md) and [the canonical P0–P13 task plan](docs/TASK.md).
 
 ## Fundamental decisions
 

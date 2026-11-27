@@ -149,7 +149,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P00-012` Document architecture, contracts, platform and security boundaries.
 - [x] `P00-013` Establish cross-platform CI for Windows AMD64, Linux AMD64 and Linux ARM64.
 - [x] `P00-014` Move reusable Go packages into `src/`, update internal imports, and move portable skills into `.agents/skills/`.
-- [ ] `P00-015` Verify the post-migration tree with native Windows AMD64, Linux AMD64 and Linux ARM64 CI.
+- [x] `P00-015` Verify the post-migration tree with native Windows AMD64, Linux AMD64 and Linux ARM64 CI ([GitHub Actions run](https://github.com/adhitiad/gotorch/actions/runs/45930296453) passed on commit `9132cee59991908c08691287689f51f753aa4626`).
 - [ ] `P00-016` Complete maintainer review of exported contracts, edge cases and API stability.
 - [ ] `P00-017` Close P0 only after all exit gates are satisfied and the checklist is reviewed.
 
