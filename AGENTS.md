@@ -1,79 +1,56 @@
 # Agent Instructions — GoTorch
 
-These instructions apply to every automated coding agent and contributor working in this repository. More specific instructions may exist in nested `AGENTS.md` files; follow the most specific applicable instructions without weakening these root constraints.
+Root instructions for all coding agents. More-specific nested `AGENTS.md` files may refine these; do not weaken root constraints. Read relevant `.agent/rules/*.md` before editing.
 
-## 1. Project identity and non-negotiable decisions
+## Project / P0 context
 
-GoTorch is a Go-native **full deep-learning and computing framework**.
+- Go-native **full deep-learning and computing framework** (tensor, autograd, NN, optim, training, inference, compiler, quantization, interoperability, distributed). Module: `github.com/adhitiad/gotorch` (`go.mod`: `go 1.27.4`).
+- **Hybrid CPU**: Pure Go is the correctness/portability reference; SIMD and BLAS/LAPACK are optional optimized paths selected by safe runtime capability detection.
+- **Distributed is first-class in contracts**, but local execution must not pay unnecessary distributed/network overhead.
+- Platforms: **Windows AMD64 primary**; Linux AMD64 and Linux ARM64 compatibility.
+- **No mandatory GPU/CUDA/DirectML/CGo/vendor SDK** in core. Do not claim performance wins without reproducible, fair benchmarks.
+- Current state is a **P0 documentation/foundation scaffold** (`gotorch.go`, `gotorch_test.go`). Do not create empty packages just to match a target tree; implement phases behind tested contracts. See `docs/ROADMAP.md`, `docs/CORE_CONTRACTS.md`, and `docs/adr/`.
 
-- Scope: tensor engine, autograd, neural networks, optimizers, training, inference, compiler, quantization, interoperability, and distributed computing.
-- Compute strategy: **hybrid CPU**. Pure Go is the portable reference path; SIMD and BLAS/LAPACK are optional optimized paths.
-- Distributed computing is first-class in architecture, but local execution must not pay unnecessary network/distributed overhead.
-- Windows AMD64 is the primary production platform. Linux AMD64 and Linux ARM64 are compatibility targets.
-- GPU is not a core dependency or an early milestone. Do not introduce mandatory CUDA, DirectML, GPU drivers, CGo, or native vendor SDKs.
-- Module path: `github.com/adhitiad/gotorch`.
-- Do not claim performance superiority over PyTorch, TensorFlow, or another framework without reproducible, fair benchmarks.
+## Commands (verified)
 
-## 2. Required workflow
+```bash
+gofmt -w .                    # format
+go test ./...                 # tests
+go test -race ./...           # race (Linux-native in CI; run when concurrency-sensitive)
+go vet ./...                  # vet
+go test -bench=. -benchmem ./...  # benchmarks
+make fmt|test|race|vet|check|bench # Makefile wrappers; check=test+vet
+```
 
-1. Read `README.md`, relevant `docs/` pages, and applicable `.agent/rules/` before editing.
-2. Identify the roadmap phase and acceptance criteria for the task.
-3. Inspect existing code and tests before proposing replacements.
-4. Write a short implementation plan for changes spanning multiple packages.
-5. Make the smallest coherent change; avoid unrelated refactors.
-6. Add or update tests and documentation in the same change.
-7. Run formatting, tests, race tests where applicable, vet, and relevant benchmarks.
-8. Report exact commands and results. Distinguish executed checks from checks not run.
+- No `golangci-lint`/typecheck/codegen config is present; do not invent them. Use `gofmt` + `go test` + `go vet` (+ race/bench as relevant).
+- Run focused package tests while iterating; run full relevant checks before reporting done.
+- CI (`.github/workflows/ci.yml`): Windows AMD64, Linux AMD64, Linux ARM64 (`ubuntu-24.04-arm`), Go `1.27.x`, runs `go test ./...`, `go vet ./...`, and `go test -race ./...` on Linux only. Push branches: `main`, `adhitiad_gpt`.
 
-## 3. Engineering rules
+## Repo map / sources of truth
 
-- Use idiomatic Go and keep public APIs small, explicit, and documented.
-- Prefer standard library dependencies. Every external dependency requires a clear justification.
-- Keep Pure Go reference implementations available for supported core operations.
-- Never assume CPU instruction support. Detect features at runtime and dispatch safely.
-- Never silently change `GOMAXPROCS` or global process configuration from a library.
-- Bound goroutines and queues. Do not spawn one goroutine per tensor element.
-- Avoid nested parallelism and coordinate Go workers with BLAS thread counts.
-- Define tensor storage ownership, aliasing, mutability, and lifetime explicitly.
-- Do not return pooled or arena-backed memory after its lifetime has ended.
-- Never concurrently mutate a shared gradient buffer without a defined reduction strategy.
-- Make cancellation, shutdown, and resource ownership explicit.
-- Distributed operations must define rank identity, collective semantics, timeout, retry, and failure behavior.
-- Never deserialize untrusted model or checkpoint data without size, shape, depth, and resource limits.
-- Errors must preserve context and support `errors.Is`/`errors.As` where appropriate.
+- `README.md` - concise project overview; detailed design in `docs/`.
+- `docs/` - architecture/contracts/roadmap/testing/platform/security; ADRs in `docs/adr/`.
+- `.agent/rules/` - mandatory domain rules (style, tensor/memory, compute/concurrency, distributed, testing/bench, security, docs/roadmap). `.agent/skills/`, `workflows/`, `templates/` are task playbooks.
+- `CONTRIBUTING.md` - short contributor flow; license selection pending, do not assume a license.
 
-## 4. Platform rules
+## Engineering constraints
 
-- CI must include Windows AMD64 and Linux AMD64.
-- Linux ARM64 must be tested natively when a runner is available; otherwise cross-compile and clearly label that limitation.
-- Keep platform-specific code behind build constraints and narrow interfaces.
-- Core CPU functionality must build without CGo or vendor SDKs.
-- Use `filepath` and platform-safe filesystem operations.
+- Keep public APIs small, explicit, documented. No unnecessary exported internals, no `interface{}` hot paths where typed dispatch fits, no premature generic abstractions that obscure kernel dispatch.
+- Validate shape/dimensions and `numel`/byte-size overflow before allocation. Define dtype/layout/shape/aliasing/ownership/lifetime/mutability/concurrency semantics explicitly.
+- Pure Go reference kernels required for supported core ops; optimized kernels must be differentially tested against them. Never assume CPU features; detect at runtime.
+- Bound goroutines/queues; no goroutine-per-element, no nested parallelism, coordinate Go workers with BLAS threads. Never silently change `GOMAXPROCS` or process-global config.
+- Never concurrently mutate shared gradient/output buffers without a defined reduction/partition strategy. Honor `context` cancellation at safe boundaries.
+- Distributed ops must define rank/world/run identity, collective semantics, deadlines/timeouts, bounded payloads, retry/idempotency, and failure/recovery behavior. No unauthenticated worker control endpoints.
+- Treat model files/checkpoints/datasets/graph defs/remote messages as untrusted: enforce size/rank/dimension/string/nesting/allocation limits; reject overflow/malformed offsets before allocation/slicing.
+- Errors preserve context and support `errors.Is`/`errors.As`; no panic for ordinary invalid input. Keep secrets out of logs/errors.
+- Code should be <395 lines per file; exceed only with a clear reason (from `.agent/rules/00-project-principles.md`).
 
-## 5. API and compatibility
+## Testing / docs / git
 
-- Do not expose internal implementation types unnecessarily.
-- Do not change public API semantics without updating docs and tests.
-- Avoid premature generic abstractions that make kernel dispatch harder to reason about.
-- Keep backend interfaces narrow and avoid `interface{}`-based hot paths where typed dispatch is feasible.
-- Document dtype, layout, shape, overflow, numerical tolerance, and concurrency semantics.
+- Tests: unit, boundary, overflow/aliasing/non-contiguous/zero-size, differential (optimized vs Pure Go), fuzz/property for shape/parsers/serialization/graph, race for concurrency-sensitive changes, distributed failure/timeout/cancellation/recovery when applicable. Benchmarks use `-benchmem`; report hardware/OS/Go/CPU features/dtype/shape/thread settings.
+- Update docs/ADRs when contracts or subsystem boundaries change. Mark capabilities planned/implemented/experimental/deprecated honestly; do not mark roadmap items implemented until acceptance criteria pass.
+- No force-push/history rewrite; do not modify `main` without explicit authorization. Keep commits focused. Do not claim commit/push/PR/merge unless verified.
 
-## 6. Testing requirements
+## Definition of done
 
-- Unit tests for correctness and boundary conditions.
-- Differential tests against the Pure Go reference kernel for optimized kernels.
-- Property/fuzz tests for shape arithmetic, parsers, serialization, and graph validation.
-- `go test -race ./...` for concurrency-sensitive changes.
-- Benchmarks with `-benchmem`; do not assert speedups without repeatable measurements.
-- Distributed tests must include worker failure, timeout, cancellation, and partial-result behavior.
-
-## 7. Git discipline
-
-- Do not force-push, rewrite history, or modify `main` without explicit authorization.
-- Use the task's designated development branch when one is provided.
-- Do not claim a commit, push, PR, or merge unless the operation succeeded and was verified.
-- Keep commits focused and use descriptive messages.
-
-## 8. Definition of done
-
-A task is complete only when its implementation, tests, documentation, compatibility implications, and verification results are accounted for. A directory or interface stub alone is not a completed feature.
+Implementation, tests, docs, compatibility impact, and exact verification commands/results are accounted for. A stub is not a completed feature. Report checks not run.
