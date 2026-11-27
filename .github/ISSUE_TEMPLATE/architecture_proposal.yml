@@ -1,0 +1,33 @@
+name: Architecture decision
+description: Propose or challenge a significant architectural decision.
+title: "[architecture]: "
+labels: ["type: research", "status: needs-design"]
+body:
+  - type: textarea
+    id: context
+    attributes:
+      label: Context and constraints
+    validations:
+      required: true
+  - type: textarea
+    id: decision
+    attributes:
+      label: Proposed decision
+    validations:
+      required: true
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives and trade-offs
+    validations:
+      required: true
+  - type: textarea
+    id: consequences
+    attributes:
+      label: Consequences, migration, and risks
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Evidence and validation plan
