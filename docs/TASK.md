@@ -234,13 +234,13 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P03-006` Add architecture-isolated SIMD kernels with scalar fallback.
 - [ ] `P03-007` Add optional BLAS/LAPACK adapter behind build/runtime configuration.
 - [ ] `P03-008` Coordinate BLAS thread count with GoTorch execution policy to prevent oversubscription.
-- [x] `P03-009` Add differential tests against Pure Go reference for every implemented optimized kernel.
+- [x] `P03-009` Add differential tests against Pure Go reference for every optimized kernel.
 - [ ] `P03-010` Benchmark representative shapes, layouts, dtypes and thread counts with `-benchmem`.
-- [ ] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
+- [x] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
 
 **Current implementation slice:** P03-001 through P03-006 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise/reduction/matmul kernels, operation/dtype differential tolerances, runtime CPU feature snapshots, and an opt-in architecture-isolated SIMD backend. `NewDefaultCPURegistry` registers an available SIMD backend before the mandatory scalar reference backend. The initial SIMD slice accelerates contiguous float32/float64 add/sub/mul only; AMD64 requires AVX2 and uses 256-bit vectors, ARM64 requires ASIMD and uses NEON 128-bit vectors. SIMD is compiled only with `GOEXPERIMENT=simd`; ordinary builds remain pure-Go and portable. Differential tests compare all implemented SIMD operations against the scalar reference, including scalar tails. The reference path continues to support strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
 
-**Verification:** [PR #15 Go CI](https://github.com/adhitiad/gotorch/actions/runs/45944890809) passed gofmt, go list, go test and go vet on Windows AMD64, Linux AMD64 and Linux ARM64; Linux race tests passed on both architectures, and benchmark smoke passed on Linux AMD64. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45944890804) also passed. The post-merge main-branch workflow is tracked separately. Operation-specific tolerance budgets, CPU feature detection, SIMD dispatch, optional BLAS/LAPACK, thread coordination, optimized-kernel differential tests and benchmark suites remain open P3 tasks. GPU and distributed acceleration are not prerequisites for P3.
+**Verification:** [PR #22 SIMD CI](https://github.com/adhitiad/gotorch/actions/runs/45948849049) passed the normal and `GOEXPERIMENT=simd` test/vet matrix on Windows AMD64, Linux AMD64 and Linux ARM64. The SIMD differential suite exercises float32/float64 add/sub/mul against the Pure Go reference, including vector tails, signed zero, subnormal values, infinities and NaNs. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45948849037) also passed. P03-007 (optional BLAS/LAPACK), P03-008 (thread coordination) and P03-010 (representative benchmarks) remain open. GPU and distributed acceleration are not prerequisites for P3.
 
 ### P4 — Scheduler & Memory Engine
 
