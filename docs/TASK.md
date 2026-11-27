@@ -5,9 +5,9 @@
 
 **Repository:** `github.com/adhitiad/gotorch`  
 **Development branch:** `adhitiad_gpt`  
-**Protected/stable target:** `main`  
+**Stable/release target:** `main`  
 **Current phase:** P0 — Foundation  
-**Current status:** P0 contracts implemented; repository source-layout migration and post-migration CI verification are in progress. Maintainer review remains required before P0 is closed.
+**Current status:** P0 contracts and `src/` migration are implemented; native CI passed on Windows AMD64, Linux AMD64 and Linux ARM64. Maintainer API review remains required before P0 is closed.
 
 ---
 
