@@ -4,11 +4,7 @@
 
 GoTorch is designed as a full deep-learning framework with a CPU-first hybrid compute engine and first-class distributed-computing architecture.
 
-<<<<<<< HEAD
-> **Project status:** P0 Foundation and P1 Tensor Engine are closed on `adhitiad_gpt`. P1 supplies owned tensors, heap storage, indexing, views, broadcasting metadata, copy/contiguous operations and versioned binary snapshots. Autograd, CPU arithmetic kernels, SIMD execution, BLAS adapters, training runtime, quantization and distributed execution remain later work. This is still an early pre-1.0 framework, not a production-ready full deep-learning framework. See the [P1 API review](docs/P1_API_REVIEW.md), [Tensor API](docs/TENSOR_API.md), and [canonical P0–P13 task plan](docs/TASK.md).
-=======
 > **Project status:** P0 Foundation, P1 Tensor Engine and P2 Automatic Differentiation are implemented and validated. P2 adds a Go-native tape/graph engine, reverse-mode VJP, forward-mode JVP, gradient accumulation, custom differentiation rules and finite-difference gradient checks for float32/float64. P3 is in progress: its first slice adds a deterministic backend registry and Pure Go float32/float64 reference kernels for elementwise math, reductions and rank-2 matrix multiplication. CPU feature detection, SIMD dispatch, optional BLAS/LAPACK and optimized-kernel benchmarks remain open, as do the later training runtime, quantization and distributed phases. This is still an early pre-1.0 framework, not a production-ready full deep-learning framework. See the [Autograd API](docs/AUTOGRAD_API.md), [P1 API review](docs/P1_API_REVIEW.md), [Tensor API](docs/TENSOR_API.md), and [canonical P0–P13 task plan](docs/TASK.md).
->>>>>>> origin/main
 
 ## Go AI ecosystem guide
 
