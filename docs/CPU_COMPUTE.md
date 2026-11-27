@@ -273,6 +273,27 @@ Every benchmark verifies one untimed result against the Pure Go reference using 
 
 Do not compare numbers across different machines without recording CPU model, memory, OS, Go version, build flags, power policy and thermal state. The benchmark logs include the Go/runtime and CPU feature metadata available to GoTorch; record the physical CPU model and machine details alongside archived results. CI runs a one-iteration smoke benchmark only; it is not a performance baseline. No automatic dispatch threshold or speedup claim should be changed until repeated target-machine measurements show a stable crossover.
 
+### Sample benchmark results
+
+A representative CI measurement was collected in [Go CI run #45958832936](https://github.com/adhitiad/gotorch/actions/runs/45958832936), using three 100 ms benchmark samples per case and reporting the median. Environment: GitHub-hosted Linux AMD64, Go 1.27.4, Intel Xeon Platinum 8573C, 4 logical CPUs, GOMAXPROCS=4; runtime feature snapshot reported AVX2 and AES available. These figures describe this runner and this storage implementation only.
+
+For contiguous 65,536-element elementwise operations:
+
+| Dtype / operation | Pure Go median | SIMD median | Approx. ratio |
+|---|---:|---:|---:|
+| float32 add | 34.87 ms | 0.503 ms | 69.3x |
+| float32 mul | 34.94 ms | 0.558 ms | 62.7x |
+| float64 add | 34.58 ms | 0.510 ms | 67.8x |
+| float64 mul | 34.36 ms | 0.586 ms | 58.7x |
+
+The Pure Go path reported about 983,049 allocations/op and 7.86 MB/op for these cases. SIMD reported 15 allocations/op and about 1.57 MB/op for float32 or 3.15 MB/op for float64. The large gap is not just vector arithmetic: the current scalar reference performs per-element storage reads/writes, while SIMD stages whole typed slices. This makes allocation reduction and storage access the next optimization targets; the figures must not be presented as an isolated ISA speedup.
+
+For 256x256 OpenBLAS GEMM with GoWorkers=1, the median was about 1.03 ms (float32) and 1.50 ms (float64) at one BLAS thread. At four BLAS threads, the median rose to about 1.77 ms and 3.25 ms respectively. The effective thread count matched the configured count in this case. Thus more BLAS threads did not improve these matrix sizes on this four-CPU runner; do not assume thread scaling without measurement. The backend still allocates roughly 1.57 MB/op for float32 and 3.15 MB/op for float64 because inputs and outputs are staged through Go-owned slices.
+
+The Pure Go reference 64x64 matmul benchmark reported roughly 91 ms/op and over 2.1 million allocations/op on this runner. This is a clear signal to optimize scalar storage access before using it as a practical large-matrix fallback. The benchmark suite intentionally records end-to-end backend cost, including staging, rather than claiming vendor-kernel peak throughput.
+
+These samples are useful as a reproducible baseline and to identify bottlenecks, but are not sufficient to retune the SIMD minimum-size threshold or claim stable cross-machine speedups. Repeat on target Windows AMD64, Linux AMD64 and Linux ARM64 hardware before changing dispatch policy.
+
 ## P3 reference kernel implementation
 
 The first Pure Go reference backend is registered as `compute.ReferenceCPUBackend` and selected through `compute.Registry`. Registration order is the deterministic dispatch precedence: optimized backends are registered before the scalar fallback.
