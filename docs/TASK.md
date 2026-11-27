@@ -242,6 +242,9 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Verification:** [PR #22 Go CI](https://github.com/adhitiad/gotorch/actions/runs/45949023103) passed gofmt, package listing, tests, vet and the Linux race/benchmark smoke checks on Windows AMD64, Linux AMD64 and Linux ARM64. Its separate `GOEXPERIMENT=simd` matrix also passed SIMD tests and vet on all three targets. Differential tests cover float32/float64 add/sub/mul against the Pure Go reference, including vector tails, signed zero, subnormal values, infinities, NaNs and scalar fallback for unsupported operations. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45949023133) passed. P03-007 (optional BLAS/LAPACK), P03-008 (thread coordination) and P03-010 (representative benchmarks) remain open. GPU and distributed acceleration are not prerequisites for P3.
 
+
+**Optional BLAS implementation (P03-007/P03-008):** implementation is staged on `feat/p03-007-008-openblas` for review. The opt-in OpenBLAS CBLAS adapter is build-tagged and dynamically loaded without CGo; current scope is contiguous rank-2 float32/float64 GEMM only. `ExecutionPolicy` caps BLAS threads by the Go worker budget and serializes process-global thread-count changes. The P03-009 differential suite is extended with float32/float64 matmul parity tests against the Pure Go reference. These items remain unchecked until the tagged native CI matrix passes.
+
 ### P4 — Scheduler & Memory Engine
 
 **Purpose:** control parallel work, allocation pressure and memory lifetime without unbounded goroutines or hidden global tuning.
