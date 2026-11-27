@@ -1,7 +1,6 @@
 package autograd
 
 import (
-
 	"github.com/adhitiad/gotorch/src/errs"
 	"github.com/adhitiad/gotorch/src/tensor"
 )
