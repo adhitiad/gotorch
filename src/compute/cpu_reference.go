@@ -30,8 +30,8 @@ const (
 type ReferenceCPUBackend struct{}
 
 func NewReferenceCPUBackend() *ReferenceCPUBackend { return &ReferenceCPUBackend{} }
-func (*ReferenceCPUBackend) Name() string           { return "purego-reference" }
-func (*ReferenceCPUBackend) Kind() BackendKind      { return BackendReference }
+func (*ReferenceCPUBackend) Name() string          { return "purego-reference" }
+func (*ReferenceCPUBackend) Kind() BackendKind     { return BackendReference }
 
 func (*ReferenceCPUBackend) Supports(spec KernelSpec, call Invocation) bool {
 	if (spec.DType != dtype.Float32 && spec.DType != dtype.Float64) ||
