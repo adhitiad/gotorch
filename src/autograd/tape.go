@@ -206,4 +206,3 @@ func (v *Variable) RequiresGrad() bool {
 	}
 	return v.tape.nodes[v.id].requiresGrad
 }
-
