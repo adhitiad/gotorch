@@ -65,7 +65,7 @@ jobs:
         run: go test -race ./...
       - name: Benchmark smoke (Linux AMD64)
         if: runner.os == 'Linux' && matrix.goarch == 'amd64'
-        run: go test -run=TestNoTests -bench=BenchmarkCPU -benchtime=1x -benchmem ./src/compute
+        run: go test -run=TestNoTests -bench=BenchmarkCPU -benchtime=100ms -count=3 -benchmem ./src/compute
   simd:
     name: SIMD experiment (${{ matrix.os }}, ${{ matrix.goarch }})
     strategy:
@@ -94,3 +94,25 @@ jobs:
         run: go test ./...
       - name: Vet SIMD build
         run: go vet ./...
+      - name: Benchmark SIMD kernels (Linux AMD64)
+        if: runner.os == 'Linux' && matrix.goarch == 'amd64'
+        run: go test -run=TestNoTests -bench=BenchmarkCPUElementwise -benchtime=100ms -count=3 -benchmem ./src/compute
+
+  openblas-bench:
+    name: OpenBLAS performance benchmark (Linux AMD64)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.x'
+          cache: true
+      - name: Install OpenBLAS
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libopenblas-dev
+          library="$(ldconfig -p | awk '/libopenblas.so.0/{print $NF; exit}')"
+          test -n "$library"
+          echo "GOTORCH_OPENBLAS_LIBRARY=$library" >> "$GITHUB_ENV"
+      - name: Benchmark real OpenBLAS GEMM and thread policy
+        run: go test -tags=gotorch_blas -run=TestNoTests -bench=BenchmarkCPUOpenBLASMatMul -benchtime=100ms -count=3 -benchmem ./src/compute

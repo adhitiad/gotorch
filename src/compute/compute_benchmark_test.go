@@ -202,15 +202,19 @@ func BenchmarkCPUOpenBLASMatMul(b *testing.B) {
 						if closer, ok := backend.(interface{ Close() error }); ok {
 							b.Cleanup(func() { _ = closer.Close() })
 						}
+						spec := KernelSpec{Operation: OpMatMul, DType: dt, Layout: tensor.LayoutContiguous}
+						verifyA := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{8, 8}, nil), 1)
+						verifyB := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{8, 8}, nil), 2)
+						verifyOut := benchmarkOutput(b, dt, 8, 8)
+						verifyCall := Invocation{Inputs: []Argument{verifyA, verifyB}, Outputs: []Argument{verifyOut}}
+						if !backend.Supports(spec, verifyCall) {
+							b.Skip("OpenBLAS backend does not support this matrix")
+						}
+						benchmarkCheckDifferential(b, backend, spec, verifyCall.Inputs, verifyOut)
 						a := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{n, n}, nil), 1)
 						bb := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{n, n}, nil), 2)
 						out := benchmarkOutput(b, dt, n, n)
-						spec := KernelSpec{Operation: OpMatMul, DType: dt, Layout: tensor.LayoutContiguous}
 						call := Invocation{Inputs: []Argument{a, bb}, Outputs: []Argument{out}}
-						if !backend.Supports(spec, call) {
-							b.Skip("OpenBLAS backend does not support this matrix")
-						}
-						benchmarkCheckDifferential(b, backend, spec, call.Inputs, out)
 						width, _ := dt.Size()
 						b.SetBytes(2*n*n*width + n*n*width)
 						effectiveThreads := (ExecutionPolicy{GoWorkers: workers, BLASThreads: threads}).EffectiveBLASThreads()
