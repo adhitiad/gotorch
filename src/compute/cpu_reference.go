@@ -75,7 +75,7 @@ func (b *ReferenceCPUBackend) Execute(ctx context.Context, spec KernelSpec, call
 				case OpNeg: y=-x
 				case OpExp: y=math.Exp(x)
 				case OpLog: y=math.Log(x)
-				case OpReLU: if x > 0 { y=x }
+				case OpReLU: if math.IsNaN(x) || x > 0 { y=x }
 				}
 			}
 			if err := writeFloat(out, i, spec.DType, y); err != nil { return err }
@@ -99,6 +99,7 @@ func (b *ReferenceCPUBackend) Execute(ctx context.Context, spec KernelSpec, call
 			for col := int64(0); col < b[1]; col++ {
 				var total float64
 				for k := int64(0); k < a[1]; k++ {
+					if k&1023 == 0 { if err := ctx.Err(); err != nil { return err } }
 					x, err := readFloatAt(call.Inputs[0], []int64{row,k}, spec.DType); if err != nil { return err }
 					y, err := readFloatAt(call.Inputs[1], []int64{k,col}, spec.DType); if err != nil { return err }
 					total += x*y
