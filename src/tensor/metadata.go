@@ -188,7 +188,7 @@ func contiguousStrides(dimensions shape.Shape) ([]int64, error) {
 		if dims[axis] > 1 && stride > maxInt64/dims[axis] {
 			return nil, errs.ErrShapeOverflow
 		}
-	stride *= dims[axis]
+		stride *= dims[axis]
 	}
 	return strides, nil
 }
