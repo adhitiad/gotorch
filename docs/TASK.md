@@ -226,10 +226,10 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Deliverables:** kernel registry, Pure Go scalar kernels, capability detection, Go SIMD implementations, optional BLAS/LAPACK adapters, dispatch and differential tests. Go 1.27 experimental SIMD is an implementation option, not a stable public API; the scalar fallback remains mandatory. See [CPU Compute Strategy](CPU_COMPUTE.md) and the [Go AI Ecosystem Guide](AI_ECOSYSTEM.md).
 
-- [ ] `P03-001` Define operation registry and kernel selection metadata.
-- [ ] `P03-002` Implement Pure Go reference kernels for core unary and binary operations.
-- [ ] `P03-003` Implement reductions and matrix multiplication reference kernels.
-- [ ] `P03-004` Define numerical tolerance and determinism policy per operation.
+- [x] `P03-001` Define operation registry and kernel selection metadata.
+- [x] `P03-002` Implement Pure Go reference kernels for core unary and binary operations.
+- [x] `P03-003` Implement reductions and matrix multiplication reference kernels.
+- [x] `P03-004` Define numerical tolerance and determinism policy per operation.
 - [ ] `P03-005` Implement runtime CPU feature detection without assuming host capabilities.
 - [ ] `P03-006` Add architecture-isolated SIMD kernels with scalar fallback.
 - [ ] `P03-007` Add optional BLAS/LAPACK adapter behind build/runtime configuration.
@@ -238,9 +238,9 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P03-010` Benchmark representative shapes, layouts, dtypes and thread counts with `-benchmem`.
 - [ ] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
 
-**Exit gates:** every supported operation has a reference path; unsupported combinations fail clearly; optimized paths pass differential tests; benchmark reports include environment and reproducible commands.
+**Current implementation slice:** P03-001 through P03-004 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise operations, full reductions and rank-2 matrix multiplication, plus an explicit numerical/cancellation policy. The initial dtype/layout boundary is float32/float64 with strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
 
-**Current engineering priority after P1:** Pure Go CPU reference kernels first, SIMD dispatch and validated architecture-specific kernels second, optional BLAS/LAPACK adapters third. GPU and distributed acceleration are not prerequisites for P3.
+**Verification pending:** the P3 PR must pass the native Windows AMD64, Linux AMD64 and Linux ARM64 CI matrix before this slice is considered merged. SIMD dispatch, CPU feature detection, optional BLAS/LAPACK and optimized-kernel differential benchmarks remain open P3 tasks. GPU and distributed acceleration are not prerequisites for P3.
 
 ### P4 — Scheduler & Memory Engine
 
