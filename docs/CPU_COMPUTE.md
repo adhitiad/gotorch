@@ -50,6 +50,19 @@ The CI matrix runs both the normal build and a separate `GOEXPERIMENT=simd` buil
 
 External OpenBLAS/BLIS/vendor libraries may be integrated behind optional adapters, but must not become mandatory CGo/native dependencies of GoTorch core. Measure conversion, layout and thread-pool overhead, not only the BLAS call.
 
+
+## Optional OpenBLAS adapter
+
+The optional OpenBLAS backend is compiled only with `-tags=gotorch_blas` on Linux or Windows. Runtime loading is separately opt-in: set `GOTORCH_OPENBLAS_LIBRARY` to the exact shared-library path. The default build has no dynamic-library dependency and does not search the host for BLAS. The adapter currently maps the supported rank-2 `matmul` kernel to row-major CBLAS SGEMM/DGEMM for contiguous float32/float64 operands; it does not claim LAPACK routines because no LAPACK operation is currently part of the compute kernel contract.
+
+The adapter requires the CBLAS GEMM symbols and OpenBLAS thread getter/setter symbols. Missing symbols or an unloadable library produce an explicit constructor error; the registry does not silently select an uncontrolled native backend. Storage is staged through Go-owned typed slices, so the adapter's performance must be benchmarked against scalar and SIMD paths before making speed claims. Cancellation is checked before and after the native call; an in-flight vendor GEMM cannot be interrupted.
+
+### BLAS thread coordination
+
+`ExecutionPolicy` specifies the maximum concurrent GoTorch workers and configured BLAS thread ceiling. The effective BLAS count is `min(BLASThreads, max(1, GOMAXPROCS/GoWorkers))`. The backend serializes each process-global OpenBLAS set/call/restore transaction, preserving the prior thread count and avoiding races between GoTorch callers. This is intentionally conservative until P04 provides a central scheduler/BLAS lease. It does not modify `GOMAXPROCS`. Callers must stop dispatching before closing the backend.
+
+CI compiles and tests the tagged adapter on Windows AMD64, Linux AMD64 and Linux ARM64 without requiring a native OpenBLAS installation; mock CBLAS functions exercise numerical parity and thread-budget behavior. The tagged build is also tested with `CGO_ENABLED=0` so the optional adapter does not introduce a CGo requirement. A real OpenBLAS library integration test remains environment-dependent.
+
 ## Dispatch
 
 Dispatch considers CPU capabilities, dtype, layout, shape, alignment, and workload size. Each optimized kernel must declare what it supports and must have a tested scalar equivalent.
