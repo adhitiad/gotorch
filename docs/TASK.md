@@ -257,7 +257,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Exit gates:** queue and goroutine counts are bounded; cancellation and shutdown are reliable; no reuse before last reference; no race/deadlock/leak regression; memory accounting is meaningful.
 
-### P5 — Neural Networks & Optimizers
+### P5 — Neural Networks, Transformers & PEFT
 
 **Purpose:** deliver composable model-building and parameter-update APIs on top of Tensor, Autograd and CPU execution.
 
@@ -285,7 +285,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Exit gates:** forward/backward results are correct; optimizer state is serializable; seeded tests are deterministic; training examples converge within stated tolerances. Transformer layers pass shape, numerical and gradient checks against small reference fixtures. LoRA updates only the declared trainable parameters, preserves frozen base weights and round-trips adapter state.
 
-### P6 — Data Engine
+### P6 — Data & Tokenizer Engine
 
 **Purpose:** load, transform, batch and stream datasets with deterministic behavior and bounded concurrency.
 
@@ -352,7 +352,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Exit gates:** train/save/load/resume/infer workflow succeeds; corrupted checkpoints fail safely; session concurrency is tested; resource cleanup and cancellation are reliable. Generation tests verify cache/non-cache parity. SFT and DPO recipes run end-to-end on deterministic toy datasets and verify gradients, loss direction and checkpoint resume. PPO is not advertised as supported until its dedicated stability tests pass.
 
-### P9 — Quantization & Numerical Optimization
+### P9 — Quantization & QLoRA
 
 **Purpose:** reduce memory and improve execution speed while measuring accuracy loss and keeping conversion behavior explicit.
 
@@ -374,7 +374,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Exit gates:** quantization is explicit and versioned; accuracy impacts are measured; no silent dtype conversion; fallback behavior is defined. Quantized outputs and gradients are checked against high-precision references using documented tolerances. NF4/FP4, double quantization, 8-bit optimizer state and QLoRA are separate support claims and require separate tests.
 
-### P10 — Distributed Computing
+### P10 — Distributed & Accelerated Runtime
 
 **Purpose:** scale training and compute across processes/nodes while preserving collective correctness, resource bounds and recoverability.
 
