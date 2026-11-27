@@ -55,9 +55,6 @@ This document contains two sequential review records. The first covers P01-001 t
 - The version-1 binary snapshot is a pre-1.0 serialization contract, not a permanent model-checkpoint interchange guarantee.
 - Tensor arithmetic, autograd integration, CPU scalar kernels, SIMD execution and BLAS adapters are not P1 deliverables. CPU compute remains P3 and its current priority is Pure Go reference kernels, then SIMD, then optional BLAS/LAPACK.
 
-<<<<<<< HEAD
-P1 is closed only for P01-001 through P01-011. This decision does not claim that GoTorch is a complete deep-learning framework or that P2/P3 are implemented.
-=======
 - [Go CI run 45935038962](https://github.com/adhitiad/gotorch/actions/runs/45935038962)
 - Windows AMD64: formatting, package discovery, tests and vet passed; race testing is skipped by the workflow on Windows.
 - Linux AMD64: formatting, package discovery, tests, vet and race testing passed.
@@ -116,4 +113,3 @@ Local verification on the follow-up commit: `gofmt -l .` produced no output; `go
 - The overlapping-layout detector is conservative: some provably non-overlapping permutations may still be rejected for bulk `Write`.
 - Multi-element strided writes are not transactional when a custom Storage implementation fails partway through.
 - This review completes P01-004 through P01-011 and the P1 checklist. It does not claim tensor arithmetic, CPU kernels, autograd or checkpoint stability.
->>>>>>> origin/main
