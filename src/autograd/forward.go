@@ -12,7 +12,7 @@ import (
 // seeds maps leaf/intermediate Variables to tangent tensors; unseeded values
 // contribute zero tangents. The returned Tensor is independently owned.
 func (t *Tape) JVP(ctx context.Context, target *Variable, seeds map[*Variable]*tensor.Tensor) (*tensor.Tensor, error) {
-	if ctx == nil || target == nil {
+	if t == nil || ctx == nil || target == nil {
 		return nil, errs.ErrInvalidArgument
 	}
 	t.mu.Lock()
@@ -66,7 +66,7 @@ func (t *Tape) JVP(ctx context.Context, target *Variable, seeds map[*Variable]*t
 			return nil, err
 		}
 		node := nodes[id]
-		if node.forward == nil || len(node.inputs) == 0 {
+		if len(node.inputs) == 0 {
 			continue
 		}
 		hasTangent := false
@@ -78,6 +78,9 @@ func (t *Tape) JVP(ctx context.Context, target *Variable, seeds map[*Variable]*t
 		}
 		if !hasTangent {
 			continue
+		}
+		if node.forward == nil {
+			return nil, fmt.Errorf("%w: operation %q has no forward-mode rule", errs.ErrUnsupportedOperation, node.opName)
 		}
 		inputValues := make([]*tensor.Tensor, len(node.inputs))
 		inputTangents := make([]*tensor.Tensor, len(node.inputs))
