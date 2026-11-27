@@ -231,14 +231,14 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P03-003` Implement reductions and matrix multiplication reference kernels.
 - [x] `P03-004` Define operation/dtype-specific absolute-relative differential tolerances, special-value comparison rules and deterministic reference traversal; add policy tests.
 - [x] `P03-005` Implement runtime CPU feature snapshots using `golang.org/x/sys/cpu`, including conservative initialization handling and architecture-specific AVX2/ASIMD/AES flags.
-- [ ] `P03-006` Add architecture-isolated SIMD kernels with scalar fallback.
+- [x] `P03-006` Add architecture-isolated SIMD kernels with scalar fallback.
 - [ ] `P03-007` Add optional BLAS/LAPACK adapter behind build/runtime configuration.
 - [ ] `P03-008` Coordinate BLAS thread count with GoTorch execution policy to prevent oversubscription.
-- [ ] `P03-009` Add differential tests against Pure Go reference for every optimized kernel.
+- [x] `P03-009` Add differential tests against Pure Go reference for every implemented optimized kernel.
 - [ ] `P03-010` Benchmark representative shapes, layouts, dtypes and thread counts with `-benchmem`.
 - [ ] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
 
-**Current implementation slice:** P03-001 through P03-003 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise operations, full reductions and rank-2 matrix multiplication. The CPU compute guide records the determinism/cancellation policy and quantified initial operation/dtype tolerance budgets. Runtime CPU capability snapshots are exposed by `compute.DetectCPUFeatures`; detection does not itself enable SIMD dispatch. The initial dtype/layout boundary is float32/float64 with strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
+**Current implementation slice:** P03-001 through P03-006 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise/reduction/matmul kernels, operation/dtype differential tolerances, runtime CPU feature snapshots, and an opt-in architecture-isolated SIMD backend. `NewDefaultCPURegistry` registers an available SIMD backend before the mandatory scalar reference backend. The initial SIMD slice accelerates contiguous float32/float64 add/sub/mul only; AMD64 requires AVX2 and uses 256-bit vectors, ARM64 requires ASIMD and uses NEON 128-bit vectors. SIMD is compiled only with `GOEXPERIMENT=simd`; ordinary builds remain pure-Go and portable. Differential tests compare all implemented SIMD operations against the scalar reference, including scalar tails. The reference path continues to support strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
 
 **Verification:** [PR #15 Go CI](https://github.com/adhitiad/gotorch/actions/runs/45944890809) passed gofmt, go list, go test and go vet on Windows AMD64, Linux AMD64 and Linux ARM64; Linux race tests passed on both architectures, and benchmark smoke passed on Linux AMD64. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45944890804) also passed. The post-merge main-branch workflow is tracked separately. Operation-specific tolerance budgets, CPU feature detection, SIMD dispatch, optional BLAS/LAPACK, thread coordination, optimized-kernel differential tests and benchmark suites remain open P3 tasks. GPU and distributed acceleration are not prerequisites for P3.
 
