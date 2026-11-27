@@ -310,7 +310,7 @@ func (t *Tape) BackwardWithGradient(ctx context.Context, target *Variable, seed 
 			parentID := node.inputs[i]
 			if !nodes[parentID].requiresGrad {
 				if contribution != nil {
-						_ = contribution.Close()
+					_ = contribution.Close()
 					contributions[i] = nil
 				}
 				continue
