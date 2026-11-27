@@ -5,7 +5,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/adhitiad/gotorch/src/dtype"
 	"github.com/adhitiad/gotorch/src/errs"
 	"github.com/adhitiad/gotorch/src/tensor"
 )
