@@ -1,5 +1,7 @@
 # P1 Tensor Ownership and Heap Storage — Initial Implementation
 
+> Implementation and maintainer review for P01-001 through P01-003 are complete on `adhitiad_gpt`. See [P1 API Review](P1_API_REVIEW.md) and the [successful Go CI run](https://github.com/adhitiad/gotorch/actions/runs/45935038962).
+
 ## Scope
 
 This implementation covers P1-001 through P1-003 only. It does not claim that slicing, views, reshape, transpose, broadcasting, indexing, copy/contiguous operations, or tensor serialization are complete.

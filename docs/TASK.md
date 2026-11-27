@@ -7,7 +7,7 @@
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
 - **Current phase:** P1 — Tensor Engine
-- **Current status:** P0 is closed. P1-001 through P1-003 implementation is in progress on `adhitiad_gpt`; task checkboxes remain open until the native platform CI and review gates pass.
+- **Current status:** P0 is closed. P1-001 through P1-003 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. P1 continues with P01-004 onward; see [P1 API Review](P1_API_REVIEW.md).
 
 ---
 ## 1. Project definition
@@ -162,9 +162,9 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Deliverables:** concrete CPU storage/allocator, owning Tensor API, constructors, indexing, views, strides, slicing, reshape/transpose, broadcasting metadata, copy/contiguous operations and safe serialization primitives.
 
-- [ ] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior.
-- [ ] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles.
-- [ ] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing.
+- [x] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior ([review](P1_API_REVIEW.md)).
+- [x] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles ([review and CI](P1_API_REVIEW.md)).
+- [x] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing ([review and CI](P1_API_REVIEW.md)).
 - [ ] `P01-004` Implement row-major indexing and checked multidimensional offset calculation.
 - [ ] `P01-005` Implement views and define aliasing/overlapping-write rules.
 - [ ] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations.
