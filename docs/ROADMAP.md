@@ -1,109 +1,26 @@
 # GoTorch Roadmap P0–P13
 
-Status labels: phases remain **Planned** until implementation and exit criteria are verified. P0 is currently **In Progress**; see [P0 Implementation](P0_IMPLEMENTATION.md).
+This file is the compact phase overview. **The authoritative task breakdown, dependency graph, Task IDs, status and checklists live in [`TASK.md`](TASK.md).** Do not maintain a separate phase status here.
 
 | Phase | Name | Main deliverable | Dependencies |
 |---|---|---|---|
-| P0 | Foundation (in progress) | Module, contracts, errors, CI, architecture docs | — |
-| P1 | Tensor Engine | Storage, shape/stride, views, dtype, core ops | P0 |
-| P2 | Automatic Differentiation | Reverse/forward AD, gradients, graph lifecycle | P1 |
-| P3 | CPU Compute | Pure Go kernels, SIMD dispatch, BLAS adapters | P1 |
-| P4 | Scheduler & Memory | Bounded parallelism, allocator, lifetime planner | P1, P3 |
-| P5 | NN & Optimizers | Modules, layers, losses, SGD/Adam/AdamW | P2, P3, P4 |
-| P6 | Data Engine | Dataset, DataLoader, sampling, transforms, streaming | P0, P4 |
-| P7 | Compiler | IR, shape inference, optimization, fusion, planning | P1, P3, P4 |
-| P8 | Training & Inference Runtime | Trainer, sessions, evaluation, checkpoint/resume | P5, P6, P7 |
+| P0 | Foundation | Module conventions, contracts, errors, platform policy, CI and agent workflow | — |
+| P1 | Tensor Engine | Owning tensors, storage, shape/stride, views and tensor data operations | P0 |
+| P2 | Automatic Differentiation | Reverse/forward AD, gradients and graph lifecycle | P1 |
+| P3 | CPU Compute | Pure Go reference kernels, safe SIMD dispatch and optional BLAS/LAPACK | P1 |
+| P4 | Scheduler & Memory | Bounded parallelism, allocator reuse and memory lifetime | P1, P3 |
+| P5 | NN & Optimizers | Modules, layers, losses, parameters and optimizers | P2, P3, P4 |
+| P6 | Data Engine | Dataset, DataLoader, sampling, transforms and streaming | P0, P4 |
+| P7 | Compiler | Typed graph IR, shape inference, optimization, fusion and execution planning | P1, P3, P4 |
+| P8 | Training & Inference Runtime | Trainer, sessions, evaluation, checkpoint and resume | P5, P6, P7 |
 | P9 | Quantization | Mixed precision, INT8/INT4, calibration and kernels | P3, P5, P8 |
-| P10 | Distributed Compute | Workers, collectives, DDP, checkpoint/recovery | P8; contracts begin P0 |
-| P11 | Interoperability | ONNX, Safetensors, native model format | P1, P5, P8 |
-| P12 | Ecosystem & Tooling | CLI, profiler UX, registry, extensions, docs | P8–P11 |
-| P13 | Production | Security, stress, performance, stability, release | P0–P12 |
+| P10 | Distributed Compute | Workers, collectives, DDP, checkpoint and recovery | P8; contracts begin P0 |
+| P11 | Interoperability | ONNX, Safetensors and native model format | P1, P5, P8 |
+| P12 | Ecosystem & Tooling | CLI, profiler, registry, extensions, docs and examples | P8–P11 |
+| P13 | Production | Security, stress, performance, stability and release | P0–P12 |
 
-## P0 — Foundation
+## Current implementation checkpoint
 
-Deliver: module conventions, errors, platform abstraction, dtype/shape metadata contract, storage ownership contract, compute interfaces, runtime lifecycle, distributed identity contracts, test infrastructure, CI matrix, architecture documentation.
+P0 contracts exist for errors, dtype, shape, tensor metadata, storage, compute backend, runtime lifecycle, distributed identity and platform policy. The reusable Go packages are being organized under `src/`; see [P0 implementation](P0_IMPLEMENTATION.md).
 
-Current implementation checkpoint:
-- Foundation packages exist for `errs`, `dtype`, `shape`, `tensor` metadata, `storage`, `compute`, `runtime`, `distributed`, and `platform`.
-- Boundary tests cover dtype sizes, shape overflow and zero-size behavior, strided storage spans, lifecycle rollback/order, and distributed membership invariants.
-- The code intentionally does not implement tensor operations, allocators, CPU kernels, or distributed transport in P0.
-
-Exit: core builds on Windows AMD64 and Linux AMD64; Linux ARM64 native test or documented cross-build; contracts reviewed; no mandatory CGo/vendor SDK. See [P0 exit gates](P0_IMPLEMENTATION.md#p0-exit-gates).
-
-## P1 — Tensor Engine
-
-Deliver: typed storage, shape/stride, broadcasting, views, slicing, reshape, transpose, contiguous conversion, arithmetic, serialization primitives.
-
-Exit: correctness, overflow, aliasing, ownership, zero-size and non-contiguous tests pass.
-
-## P2 — Autograd
-
-Deliver: reverse-mode AD, forward-mode foundations, gradient accumulation, backward graph, custom gradient hooks, gradient checking.
-
-Exit: finite-difference gradient checks and lifecycle/concurrency tests pass.
-
-## P3 — CPU Compute
-
-Deliver: Pure Go reference kernels, dispatch registry, CPU feature detection, SIMD implementations, optional BLAS/LAPACK, optimized MatMul/reductions.
-
-Exit: differential tests pass; safe feature dispatch; reproducible benchmarks.
-
-## P4 — Scheduler and Memory
-
-Deliver: bounded worker scheduler, chunking, cancellation, arenas, buffer reuse, memory statistics, execution lifetime.
-
-Exit: race/deadlock/leak tests pass; oversubscription bounded; memory ownership documented.
-
-## P5 — Neural Networks and Optimizers
-
-Deliver: Module, parameters, Linear, activations, normalization, convolution foundations, loss, SGD, Adam, AdamW, LR scheduler.
-
-Exit: forward/backward correctness and XOR/regression training examples pass.
-
-## P6 — Data Engine
-
-Deliver: Dataset, DataLoader, sampler, batching, shuffle, transforms, prefetch, streaming, caching.
-
-Exit: deterministic seeding, cancellation, worker lifecycle, and throughput tests pass.
-
-## P7 — Compiler and Graph Optimization
-
-Deliver: graph IR, shape inference, validation, constant folding, dead-code elimination, fusion, execution/memory planner.
-
-Exit: optimized graph matches reference within documented tolerances; compile and run costs measured separately.
-
-## P8 — Training and Inference Runtime
-
-Deliver: Trainer, evaluation, inference session, batching, checkpoint, resume, profiling.
-
-Exit: train-save-load-infer workflow works; session concurrency and checkpoint consistency tested.
-
-## P9 — Quantization
-
-Deliver: FP16/BF16 where practical, INT8/INT4 paths, calibration, quantized kernels, mixed precision.
-
-Exit: accuracy and performance trade-offs measured; no silent conversion.
-
-## P10 — Distributed Computing
-
-Deliver: coordinator, worker, transport, collectives, DDP, parameter synchronization, distributed checkpoint, recovery.
-
-Exit: multi-process training, collective correctness, worker failure, timeout, cancellation, and recovery tests pass.
-
-## P11 — Interoperability
-
-Deliver: ONNX import/export for declared operator coverage, Safetensors, versioned native model format.
-
-Exit: compatibility matrix, malformed-file tests, parity tests, and resource limits.
-
-## P12 — Ecosystem and Tooling
-
-Deliver: CLI, model inspection, profiler tooling, examples, registry/extension contracts, tutorials.
-
-Exit: developer workflows documented and integration-tested.
-
-## P13 — Production
-
-Deliver: API stabilization, fuzzing, security review, stress tests, performance baselines, cross-platform release automation.
-
-Exit: all release gates pass; known limitations and reproducible benchmark reports published.
+A phase is not complete because its package or interface exists. It is complete only after its implementation, tests, documentation, platform verification and exit criteria pass. See [`TASK.md`](TASK.md) for the operational checklist.

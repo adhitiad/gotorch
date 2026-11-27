@@ -2,7 +2,7 @@
 
 ## Product definition
 
-GoTorch is a Go-native full deep-learning and computing framework. It provides tensor computation, automatic differentiation, neural networks, optimization, training, inference, graph compilation, quantization, model interoperability, and distributed execution.
+GoTorch is a Go-native full deep-learning and computing framework. It provides tensor computation, automatic differentiation, neural networks, optimization, training, inference, graph compilation, quantization, model interoperability and distributed execution.
 
 ## Fundamental architecture decisions
 
@@ -13,28 +13,36 @@ GoTorch is a Go-native full deep-learning and computing framework. It provides t
 5. GPU and vendor accelerators are optional future extensions, not core dependencies or early priorities.
 6. Module path: `github.com/adhitiad/gotorch`.
 
+## Repository package boundaries
+
+- Reusable framework packages live under `src/<package>/`.
+- Their import paths use `github.com/adhitiad/gotorch/src/<package>`.
+- `cmd/<name>/main.go` owns executable entry points.
+- `app/<name>/` owns application-level composition, dependency wiring and external adapters.
+- Root `gotorch.go` is a small compatibility facade for the root module import, not a home for framework internals.
+
 ## Layers
 
 ### Public API and ecosystem
-Developer API, CLI, examples, model registry, extensions, and tooling.
+Developer API, CLI, examples, model registry, extensions and tooling.
 
 ### Framework
-Tensor, autograd, neural-network modules, optimizers, loss, initialization, data, training, and inference.
+Tensor, autograd, neural-network modules, optimizers, loss, initialization, data, training and inference.
 
 ### Compiler and graph
-Frontend graph, typed IR, shape inference, graph validation, optimization passes, fusion, memory planning, and execution planning.
+Frontend graph, typed IR, shape inference, graph validation, optimization passes, fusion, memory planning and execution planning.
 
 ### Unified runtime
-Scheduler, executor, kernel dispatcher, session lifecycle, memory management, profiling, and cancellation.
+Scheduler, executor, kernel dispatcher, session lifecycle, memory management, profiling and cancellation.
 
 ### Local compute
-Pure Go kernels, architecture-specific SIMD, and optional BLAS/LAPACK adapters.
+Pure Go kernels, architecture-specific SIMD and optional BLAS/LAPACK adapters.
 
 ### Distributed compute
-Coordinator, workers, transport, collectives, placement, distributed tensors, checkpointing, and recovery.
+Coordinator, workers, transport, collectives, placement, distributed tensors, checkpointing and recovery.
 
 ### Hardware and storage
-System RAM, CPU cache, NUMA topology, network, and optional accelerator extensions.
+System RAM, CPU cache, NUMA topology, network and optional accelerator extensions.
 
 ## Execution modes
 
@@ -55,4 +63,6 @@ These modes should share tensor semantics and operator definitions while allowin
 
 ## P0 implementation checkpoint
 
-P0's current foundation contracts are provided by `errs`, `dtype`, `shape`, `tensor`, `storage`, `compute`, `runtime`, `distributed`, and `platform`. They do not yet provide a concrete tensor allocator, tensor arithmetic, reference CPU kernels, SIMD/BLAS execution, or distributed transport. Those are later-phase deliverables, even though their contracts are defined early.
+P0's current foundation contracts are provided by `src/errs`, `src/dtype`, `src/shape`, `src/tensor`, `src/storage`, `src/compute`, `src/runtime`, `src/distributed` and `src/platform`. They do not yet provide a concrete tensor allocator, tensor arithmetic, reference CPU kernels, SIMD/BLAS execution or distributed transport. Those are later-phase deliverables, even though their contracts are defined early.
+
+See [`TASK.md`](TASK.md) for the phase-level task plan and checklists.

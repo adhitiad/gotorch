@@ -1,22 +1,17 @@
-# Architecture Decision Log
+# Architecture Decision Index
 
-This index records decisions that must be formalized as individual ADRs as the implementation matures. These entries are design constraints, not proof that the corresponding runtime exists.
+This file is an index only. The full decision record is stored as an individual ADR under `docs/adr/`. ADR status is authoritative in those files. These decisions are architectural constraints, not proof that all related runtime capabilities exist.
 
-| ID | Topic | Current direction | Status |
+| ADR | Topic | Decision | Status |
 |---|---|---|---|
-| ADR-0001 | Pure Go reference | Portable correctness baseline | Proposed |
-| ADR-0002 | Hybrid CPU compute | Pure Go + optional SIMD + optional BLAS/LAPACK | Proposed |
-| ADR-0003 | Tensor memory model | Explicit shape, stride, ownership, and aliasing contracts | Proposed |
-| ADR-0004 | Autograd | Explicit graph lifecycle and gradient accumulation semantics | Proposed |
-| ADR-0005 | Parallel scheduler | Bounded workers and explicit nested-parallelism policy | Proposed |
-| ADR-0006 | Runtime dispatch | Runtime CPU feature detection with safe fallback | Proposed |
-| ADR-0007 | Distributed execution | First-class worker and collective contracts | Proposed |
-| ADR-0008 | GPU extension | Optional backend behind stable interfaces; future scope | Proposed |
-| ADR-0009 | Platform support | Windows AMD64 primary; Linux AMD64/ARM64 compatibility | Proposed |
-| ADR-0010 | API stability | Explicit compatibility policy before 1.0 | Proposed |
+| [ADR-0001](adr/0001-full-framework-cpu-hybrid-distributed-first.md) | Full framework, hybrid CPU, distributed-first architecture | Full framework scope; Pure Go correctness baseline; optional optimized CPU paths; distributed contracts from the foundation | Accepted |
+| [ADR-0002](adr/0002-pure-go-reference-and-optional-optimized-backends.md) | CPU backend strategy | Pure Go required reference; SIMD and BLAS/LAPACK optional and differentially tested | Accepted |
+| [ADR-0003](adr/0003-distributed-first-class-but-local-fast-path.md) | Distributed execution | Distributed identity/placement contracts early; local execution remains a low-overhead in-process fast path | Accepted |
 
-## ADR template
-Each ADR should include: title, status, date, owners, context, constraints, decision, alternatives, consequences, security impact, compatibility/migration, and validation evidence.
+## ADR requirements
+
+A new ADR should include: ID, title, status, date, context, constraints, decision, alternatives, consequences, security impact, compatibility/migration and validation evidence.
 
 ## Status vocabulary
-Proposed, Accepted, Rejected, Deprecated, Superseded. An accepted decision should be changed through a superseding ADR rather than silently rewritten.
+
+Proposed, Accepted, Rejected, Deprecated, Superseded. Change a fundamental accepted decision through a superseding ADR rather than silently rewriting its rationale.
