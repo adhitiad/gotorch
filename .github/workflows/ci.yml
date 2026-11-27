@@ -57,4 +57,4 @@ jobs:
         run: go test -race ./...
       - name: Benchmark smoke (Linux AMD64)
         if: runner.os == 'Linux' && matrix.goarch == 'amd64'
-        run: go test -run '^ -bench '^BenchmarkTensor' -benchtime=1x -benchmem ./src/tensor
+        run: go test -run=TestNoTests -bench=BenchmarkTensor -benchtime=1x -benchmem ./src/tensor
