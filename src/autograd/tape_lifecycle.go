@@ -3,6 +3,7 @@ package autograd
 import (
 	"errors"
 
+	"github.com/adhitiad/gotorch/src/dtype"
 	"github.com/adhitiad/gotorch/src/errs"
 )
 
