@@ -1,0 +1,47 @@
+name: Bug report
+description: Report a reproducible defect.
+title: "[bug]: "
+labels: ["type: bug", "status: triage"]
+body:
+  - type: markdown
+    attributes:
+      value: "Search existing issues first. Never include secrets, private data, or exploit details."
+  - type: input
+    id: version
+    attributes:
+      label: GoTorch version / commit
+      placeholder: "commit SHA or release tag"
+    validations:
+      required: true
+  - type: dropdown
+    id: platform
+    attributes:
+      label: Platform
+      options: ["Windows AMD64", "Linux AMD64", "Linux ARM64", "Other"]
+    validations:
+      required: true
+  - type: textarea
+    id: reproduction
+    attributes:
+      label: Minimal reproduction
+      description: Include the smallest code sample and exact commands.
+      render: go
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: Logs and environment
+      description: Redact tokens, credentials, personal data, and proprietary information.
