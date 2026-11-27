@@ -148,28 +148,7 @@ func (t *Tensor) readAll() ([]byte, error) {
 	}
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	if t.closed || nilDependency(t.storage) {
-		return nil, errs.ErrInvalidState
-	}
-	if t.metadata.Layout() != LayoutContiguous {
-		return nil, errs.ErrUnsupportedOperation
-	}
-	size, err := t.metadata.RequiredBytes()
-	if err != nil {
-		return nil, err
-	}
-	if uint64(size) > uint64(^uint(0)>>1) {
-		return nil, errs.ErrShapeOverflow
-	}
-	result := make([]byte, int(size))
-	n, err := t.storage.ReadAt(result, t.offset)
-	if err != nil {
-		return nil, fmt.Errorf("tensor: read storage: %w", err)
-	}
-	if n != len(result) {
-		return nil, fmt.Errorf("tensor: read %d of %d bytes: %w", n, len(result), errs.ErrInvalidState)
-	}
-	return result, nil
+	return t.readLogicalBytesLocked()
 }
 
 func (t *Tensor) writeAll(data []byte) error {
@@ -178,27 +157,7 @@ func (t *Tensor) writeAll(data []byte) error {
 	}
 	t.mu.RLock()
 	defer t.mu.RUnlock()
-	if t.closed || nilDependency(t.storage) {
-		return errs.ErrInvalidState
-	}
-	if t.metadata.Layout() != LayoutContiguous {
-		return errs.ErrUnsupportedOperation
-	}
-	size, err := t.metadata.RequiredBytes()
-	if err != nil {
-		return err
-	}
-	if int64(len(data)) != size {
-		return fmt.Errorf("%w: got %d bytes, want %d", errs.ErrInvalidArgument, len(data), size)
-	}
-	n, err := t.storage.WriteAt(data, t.offset)
-	if err != nil {
-		return fmt.Errorf("tensor: write storage: %w", err)
-	}
-	if n != len(data) {
-		return fmt.Errorf("tensor: wrote %d of %d bytes: %w", n, len(data), errs.ErrInvalidState)
-	}
-	return nil
+	return t.writeLogicalBytesLocked(data)
 }
 
 func nilDependency(value any) bool {

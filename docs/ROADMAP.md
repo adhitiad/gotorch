@@ -21,6 +21,8 @@ This file is the compact phase overview. **The authoritative task breakdown, dep
 
 ## Current implementation checkpoint
 
+The near-term compute emphasis is CPU-first: Pure Go correctness kernels, SIMD acceleration with safe fallback, then optional BLAS/LAPACK. The [Go AI Ecosystem Guide](AI_ECOSYSTEM.md) lists reusable external Go modules without making them GoTorch core dependencies.
+
 P0 contracts exist for errors, dtype, shape, tensor metadata, storage, compute backend, runtime lifecycle, distributed identity and platform policy. The reusable Go packages are being organized under `src/`; see [P0 implementation](P0_IMPLEMENTATION.md).
 
 A phase is not complete because its package or interface exists. It is complete only after its implementation, tests, documentation, platform verification and exit criteria pass. See [`TASK.md`](TASK.md) for the operational checklist.

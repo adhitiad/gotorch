@@ -20,8 +20,14 @@ Strides are measured in elements. Negative strides are not accepted by the initi
 - `Close` is idempotent. The zero value owns no resources; its methods other than `Close` return `errs.ErrInvalidState`. Closing the zero value is safe.
 - Constructors allocate contiguous storage. Rank zero has one element; any zero dimension has zero elements and owns a valid zero-byte storage handle.
 - The Pure Go `storage.HeapAllocator` returns zero-initialized storage. Every retained storage handle is released independently; the allocation is reclaimed after its final handle is released.
-- Typed construction and access encode/decode fixed-width values in little-endian form. `From` and `Write` copy input values; `Read` returns a new copy. No typed slice aliases internal storage.
-- No raw backing slice or mutable storage handle is exposed by Tensor. Views, strides, overlapping writes, and non-contiguous typed access remain later P1 work and must preserve the above lifetime rules.
+- Typed construction and access encode/decode fixed-width values in little-endian form. `From` and `Write` copy input values; `Read` returns a new packed row-major copy. No typed slice aliases internal storage.
+- `Metadata.ElementOffset` calculates a checked physical element offset from strides; `LinearIndex` calculates the row-major logical index. `At` and `Set` address one logical element with dtype and bounds validation.
+- Tensor views (`Slice`, `Narrow`, `Select`, `Reshape`, `Transpose`, `BroadcastTo`) retain an independent storage handle. View handles have independent `Close` lifetimes but share mutations with the same allocation.
+- Slices use positive steps and end-exclusive bounds. Negative strides are not supported. Reshape is a metadata-only view and therefore requires contiguous input.
+- Broadcast expansion uses zero strides. Reads are supported; bulk `Write` rejects layouts whose uniqueness cannot be proven with `errs.ErrOverlappingWrite`. A single indexed `Set` is deterministic and visible through aliases.
+- `Copy` and `Contiguous` always return independent row-major allocations, even when the source is already contiguous.
+- `MarshalBinary` emits a versioned, little-endian logical snapshot. `UnmarshalBinary` validates magic, format version, dtype, dimensions, payload length and canonical Bool bytes before installing a new allocation; it requires a zero or closed receiver.
+- No raw backing slice or mutable storage handle is exposed by Tensor.
 
 ## Storage ownership
 

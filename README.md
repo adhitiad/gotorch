@@ -4,7 +4,15 @@
 
 GoTorch is designed as a full deep-learning framework with a CPU-first hybrid compute engine and first-class distributed-computing architecture.
 
-> **Project status:** P0 Foundation is closed. The foundation contracts and `src/` layout have passed native CI on Windows AMD64, Linux AMD64 and Linux ARM64. The Tensor Engine, autograd system, CPU kernel library, and distributed runtime are not yet complete. This is an early foundation preview, not a production-ready deep-learning framework. See the [P0 implementation record](docs/P0_IMPLEMENTATION.md), [maintainer API review](docs/P0_API_REVIEW.md), and [canonical P0–P13 task plan](docs/TASK.md).
+> **Project status:** P0 Foundation is closed. The Tensor Engine is being completed on `adhitiad_gpt`; autograd, CPU kernel library, training runtime, quantization and distributed execution remain later phases. This is an early foundation project, not a production-ready full deep-learning framework. See the [P0 implementation record](docs/P0_IMPLEMENTATION.md), [maintainer API review](docs/P0_API_REVIEW.md), and [canonical P0–P13 task plan](docs/TASK.md).
+
+## Go AI ecosystem guide
+
+New contributors should start with **[Go AI Ecosystem Guide](docs/AI_ECOSYSTEM.md)**. It maps real Go modules for training, Hugging Face downloads/tokenizers, numerical computing, CPU feature detection, SIMD, BLAS and dataset formats.
+
+Important distinction: GoTorch is its own framework. Projects such as [GoMLX](https://github.com/gomlx/gomlx) and [go-huggingface](https://github.com/gomlx/go-huggingface) already provide useful Go-native capabilities, but their features are not automatically GoTorch features or dependencies.
+
+**Current GoTorch engineering priority: Pure Go CPU reference kernels first, SIMD acceleration second, optional BLAS/LAPACK third.** GPU and native accelerator runtimes are not core requirements.
 
 ## Module and package documentation
 
@@ -20,7 +28,7 @@ After the `v0.1.0-alpha.1` tag is published, install the module with:
 go get github.com/adhitiad/gotorch@v0.1.0-alpha.1
 ```
 
-The root module provides a small compatibility facade. Reusable framework APIs are currently organized under `src/`, for example:
+The root module provides a small compatibility facade. Reusable framework APIs are organized under `src/`, for example:
 
 ```go
 import (
@@ -35,7 +43,7 @@ See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the Go module release and pkg.g
 ## Fundamental decisions
 
 - **Scope:** tensors, automatic differentiation, neural networks, optimizers, data pipelines, training, inference, compiler, quantization, interoperability and distributed computing.
-- **Compute:** hybrid CPU — Pure Go reference kernels, architecture-specific SIMD and optional BLAS/LAPACK adapters.
+- **Compute:** CPU-first hybrid — Pure Go reference kernels, Go SIMD/architecture-specific acceleration and optional BLAS/LAPACK adapters.
 - **Distributed:** first-class in architecture, without imposing network overhead on local execution.
 - **Platforms:** Windows AMD64 primary; Linux AMD64 and Linux ARM64 compatibility.
 - **Accelerators:** optional future extensions. GPU is not a core dependency or early implementation priority.
@@ -64,10 +72,10 @@ Storage · RAM · Cache · NUMA · Network
 - `src/`: reusable Go framework packages and tests.
 - `cmd/`: executable entry points (`package main`).
 - `app/`: application composition, adapters and dependency wiring.
-- `gotorch.go`: small root public API facade.
-- `docs/TASK.md`: canonical roadmap, P0–P13 descriptions, dependency map and implementation checklists.
+- `gotorch.go`: small public root-package facade.
+- `docs/TASK.md`: canonical roadmap, P0–P13 descriptions, dependencies and task checklists.
+- `docs/AI_ECOSYSTEM.md`: Go libraries and recommended AI development paths.
 - `AGENTS.md`: shared instructions for coding agents.
-- `docs/AGENT_SETUP.md`: discovery/setup guidance for Codex, OpenClaw, OpenCode, Hermes and Copilot.
 - `.agents/skills/`: portable reusable agent skills.
 - `.agent/rules/`, `.agent/workflows/`, `.agent/templates/`: engineering rules and task playbooks.
 - `community/`: governance, conduct, support, security and release policy.
@@ -94,17 +102,9 @@ Storage · RAM · Cache · NUMA · Network
 
 Read [`docs/TASK.md`](docs/TASK.md) for phase descriptions, task IDs, dependencies, checklists and agent handoff protocol. [`docs/ROADMAP.md`](docs/ROADMAP.md) provides the compact phase overview. [`docs/PROJECT_CHARTER.md`](docs/PROJECT_CHARTER.md) explains the project mission, problem statement, rationale for Go, scope and non-goals.
 
-## Agent interoperability
-
-Use the repository-level `AGENTS.md` as the common instruction entry point. It points every agent to the same `docs/TASK.md`, rules and portable skills. Do not maintain separate copies of task status for individual agent products.
-
-## Development status
-
-P0 establishes typed metadata, error, storage ownership, compute backend, runtime lifecycle, platform and distributed identity contracts. It does not implement tensor arithmetic, concrete memory allocation, reference CPU kernels, SIMD/BLAS execution or distributed transport. A production capability exists only after its implementation, tests and phase exit criteria pass.
-
 ## Toolchain and commands
 
-The module's declared Go version is recorded in `go.mod`. Use a compatible supported release.
+Use the Go version declared in `go.mod`.
 
 ```bash
 go test ./...
@@ -112,6 +112,8 @@ go test -race ./...
 go vet ./...
 go test -bench=. -benchmem ./...
 ```
+
+See [`docs/CPU_COMPUTE.md`](docs/CPU_COMPUTE.md) for CPU/SIMD design and [`docs/AI_ECOSYSTEM.md`](docs/AI_ECOSYSTEM.md) for optional modules.
 
 ## Governance and contribution
 
