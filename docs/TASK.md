@@ -6,8 +6,8 @@
 - **Repository:** `github.com/adhitiad/gotorch`
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
-- **Current phase:** P1 — Tensor Engine
-- **Current status:** P0 is closed. P1-001 through P1-003 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. P1 continues with P01-004 onward; see [P1 API Review](P1_API_REVIEW.md).
+- **Current phase:** P2 — Automatic Differentiation
+- **Current status:** P0 and P1 are closed. P1-001 through P1-011 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. See [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
 
 ---
 ## 1. Project definition
@@ -158,23 +158,25 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 ### P1 — Tensor Engine
 
-**Purpose:** turn metadata and storage contracts into usable tensor values with explicit ownership and view semantics.
+**Purpose:** turn metadata and storage contracts into usable tensor values with explicit ownership, indexing, view, stride and data-layout semantics.
 
 **Deliverables:** concrete CPU storage/allocator, owning Tensor API, constructors, indexing, views, strides, slicing, reshape/transpose, broadcasting metadata, copy/contiguous operations and safe serialization primitives.
 
 - [x] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior ([review](P1_API_REVIEW.md)).
 - [x] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles ([review and CI](P1_API_REVIEW.md)).
 - [x] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing ([review and CI](P1_API_REVIEW.md)).
-- [ ] `P01-004` Implement row-major indexing and checked multidimensional offset calculation.
-- [ ] `P01-005` Implement views and define aliasing/overlapping-write rules.
-- [ ] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations.
-- [ ] `P01-007` Implement broadcast shape inference and validation.
-- [ ] `P01-008` Implement contiguous conversion and explicit copy semantics.
-- [ ] `P01-009` Add property tests for indexing, stride, view aliasing and round-trip reshape.
-- [ ] `P01-010` Add benchmarks for allocation, view creation, indexing and copy.
-- [ ] `P01-011` Document public Tensor API and ownership examples.
+- [x] `P01-004` Implement row-major indexing and checked multidimensional offset calculation ([metadata API](TENSOR_API.md#typed-access-and-indexing)).
+- [x] `P01-005` Implement views and define aliasing/overlapping-write rules ([view semantics](TENSOR_API.md#views-and-aliasing)).
+- [x] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations ([view API](TENSOR_API.md#views-and-aliasing)).
+- [x] `P01-007` Implement broadcast shape inference and validation ([broadcast API](TENSOR_API.md#views-and-aliasing)).
+- [x] `P01-008` Implement contiguous conversion and explicit copy semantics ([copy API](TENSOR_API.md#copy-and-contiguous-conversion)).
+- [x] `P01-009` Add property tests for indexing, stride, view aliasing and round-trip reshape ([property tests](../src/tensor/metadata_ops_test.go)).
+- [x] `P01-010` Add benchmarks for allocation, view creation, indexing and copy ([benchmarks](../src/tensor/tensor_bench_test.go)).
+- [x] `P01-011` Document public Tensor API and ownership examples ([Tensor API](TENSOR_API.md), [ownership review](P1_TENSOR_OWNERSHIP.md)).
 
-**Exit gates:** no overflow or out-of-bounds access; views retain storage; aliasing behavior is deterministic and documented; scalar, empty, contiguous and non-contiguous cases pass; tests pass under race detector.
+**P1 exit gates:** overflow and bounds checks are covered; views retain storage; aliasing behavior is deterministic and documented; scalar, empty, contiguous and non-contiguous cases pass; Linux race tests pass; the native Windows AMD64/Linux AMD64/Linux ARM64 CI matrix passes. The final verification run is [Go CI 45937237974](https://github.com/adhitiad/gotorch/actions/runs/45937237974); benchmark smoke ran on Linux AMD64.
+
+**Accepted limits:** negative strides are not supported; `Reshape` is a view and requires contiguous input; bulk writes to overlapping broadcast layouts return `errs.ErrOverlappingWrite`; custom-storage strided writes are not transactional; the versioned binary snapshot is pre-1.0 and is not a permanent checkpoint compatibility promise. Tensor arithmetic and CPU kernels are later-phase work.
 
 ### P2 — Automatic Differentiation
 
