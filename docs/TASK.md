@@ -229,8 +229,8 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P03-001` Define operation registry and kernel selection metadata.
 - [x] `P03-002` Implement Pure Go reference kernels for core unary and binary operations.
 - [x] `P03-003` Implement reductions and matrix multiplication reference kernels.
-- [ ] `P03-004` Define numerical tolerance and determinism policy per operation.
-- [ ] `P03-005` Implement runtime CPU feature detection without assuming host capabilities.
+- [x] `P03-004` Define operation/dtype-specific absolute-relative differential tolerances, special-value comparison rules and deterministic reference traversal; add policy tests.
+- [x] `P03-005` Implement runtime CPU feature snapshots using `golang.org/x/sys/cpu`, including conservative initialization handling and architecture-specific AVX2/ASIMD/AES flags.
 - [ ] `P03-006` Add architecture-isolated SIMD kernels with scalar fallback.
 - [ ] `P03-007` Add optional BLAS/LAPACK adapter behind build/runtime configuration.
 - [ ] `P03-008` Coordinate BLAS thread count with GoTorch execution policy to prevent oversubscription.
@@ -238,7 +238,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [ ] `P03-010` Benchmark representative shapes, layouts, dtypes and thread counts with `-benchmem`.
 - [ ] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
 
-**Current implementation slice:** P03-001 through P03-003 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise operations, full reductions and rank-2 matrix multiplication. The CPU compute guide records the initial determinism/cancellation policy; quantified operation-specific tolerance budgets remain P03-004. The initial dtype/layout boundary is float32/float64 with strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
+**Current implementation slice:** P03-001 through P03-003 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise operations, full reductions and rank-2 matrix multiplication. The CPU compute guide records the determinism/cancellation policy and quantified initial operation/dtype tolerance budgets. Runtime CPU capability snapshots are exposed by `compute.DetectCPUFeatures`; detection does not itself enable SIMD dispatch. The initial dtype/layout boundary is float32/float64 with strided inputs and contiguous outputs. Broadcasting, batched matmul and low-precision/complex arithmetic remain unsupported.
 
 **Verification:** [PR #15 Go CI](https://github.com/adhitiad/gotorch/actions/runs/45944890809) passed gofmt, go list, go test and go vet on Windows AMD64, Linux AMD64 and Linux ARM64; Linux race tests passed on both architectures, and benchmark smoke passed on Linux AMD64. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45944890804) also passed. The post-merge main-branch workflow is tracked separately. Operation-specific tolerance budgets, CPU feature detection, SIMD dispatch, optional BLAS/LAPACK, thread coordination, optimized-kernel differential tests and benchmark suites remain open P3 tasks. GPU and distributed acceleration are not prerequisites for P3.
 
