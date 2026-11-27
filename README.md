@@ -4,7 +4,7 @@
 
 GoTorch is designed as a full deep-learning framework with a CPU-first hybrid compute engine and first-class distributed-computing architecture.
 
-> **Project status:** P0 Foundation is closed. The Tensor Engine is being completed on `adhitiad_gpt`; autograd, CPU kernel library, training runtime, quantization and distributed execution remain later phases. This is an early foundation project, not a production-ready full deep-learning framework. See the [P0 implementation record](docs/P0_IMPLEMENTATION.md), [maintainer API review](docs/P0_API_REVIEW.md), and [canonical P0–P13 task plan](docs/TASK.md).
+> **Project status:** P0 Foundation and P1 Tensor Engine are closed on `main`. P1 supplies owned tensors, heap storage, indexing, views, broadcasting metadata, copy/contiguous operations and versioned binary snapshots. Autograd, CPU arithmetic kernels, SIMD execution, BLAS adapters, training runtime, quantization and distributed execution remain later work. This is still an early pre-1.0 framework, not a production-ready full deep-learning framework. See the [P1 API review](docs/P1_API_REVIEW.md), [Tensor API](docs/TENSOR_API.md), and [canonical P0–P13 task plan](docs/TASK.md).
 
 ## Go AI ecosystem guide
 
