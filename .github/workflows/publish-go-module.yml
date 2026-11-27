@@ -1,0 +1,82 @@
+name: Publish Go module
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Verify release (${{ matrix.os }}, ${{ matrix.goarch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            goarch: amd64
+          - os: ubuntu-latest
+            goarch: amd64
+          - os: ubuntu-24.04-arm
+            goarch: arm64
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Validate semantic version tag
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME}"
+          if [[ ! "${version}" =~ ^v[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?$ ]]; then
+            echo "Invalid Go module SemVer tag: ${version}"
+            exit 1
+          fi
+      - name: Verify target architecture
+        shell: bash
+        run: test "$(go env GOARCH)" = "${{ matrix.goarch }}"
+      - name: Verify Go formatting
+        shell: bash
+        run: |
+          files=$(gofmt -l $(git ls-files '*.go'))
+          if [ -n "$files" ]; then
+            echo "Go files need gofmt:"
+            echo "$files"
+            exit 1
+          fi
+      - name: List packages
+        run: go list ./...
+      - name: Test
+        run: go test ./...
+      - name: Vet
+        run: go vet ./...
+      - name: Race tests (Linux only)
+        if: runner.os == 'Linux'
+        run: go test -race ./...
+
+  request-proxy-index:
+    name: Request tagged module from Go proxy
+    needs: verify
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version-file: go.mod
+      - name: Fetch immutable release from proxy.golang.org
+        shell: bash
+        env:
+          MODULE_PATH: github.com/adhitiad/gotorch
+        run: |
+          version="${GITHUB_REF_NAME}"
+          temp_dir="$(mktemp -d)"
+          cd "$temp_dir"
+          go mod init example.com/gotorch-publish-check
+          GOPROXY=https://proxy.golang.org GOSUMDB=sum.golang.org \
+            go mod download -json "${MODULE_PATH}@${version}"
