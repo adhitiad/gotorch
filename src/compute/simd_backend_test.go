@@ -137,7 +137,7 @@ func TestDefaultCPURegistryRoutesUnsupportedOperationsToReference(t *testing.T) 
 		t.Fatal(err)
 	}
 	input := floatArg(t, []float64{1}, 1)
-	output := outputArg(t)
+	output := outputArg(t, 1)
 	call := Invocation{Inputs: []Argument{input}, Outputs: []Argument{output}}
 	spec := KernelSpec{Operation: OpExp, DType: dtype.Float64, Layout: tensor.LayoutContiguous}
 	selected, err := registry.Select(spec, call)
