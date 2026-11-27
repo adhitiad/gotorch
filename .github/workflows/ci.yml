@@ -65,7 +65,36 @@ jobs:
         run: go test -race ./...
       - name: Benchmark smoke (Linux AMD64)
         if: runner.os == 'Linux' && matrix.goarch == 'amd64'
-        run: go test -run=TestNoTests -bench=BenchmarkTensor -benchtime=1x -benchmem ./src/tensor
+        run: go test -run='^
+  simd:
+    name: SIMD experiment (${{ matrix.os }}, ${{ matrix.goarch }})
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            goarch: amd64
+          - os: ubuntu-latest
+            goarch: amd64
+          - os: ubuntu-24.04-arm
+            goarch: arm64
+    runs-on: ${{ matrix.os }}
+    env:
+      GOEXPERIMENT: simd
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-go@v7
+        with:
+          go-version: '1.27.x'
+          cache: true
+      - name: Verify architecture
+        shell: bash
+        run: test "$(go env GOARCH)" = "${{ matrix.goarch }}"
+      - name: Test SIMD and scalar differential paths
+        run: go test ./...
+      - name: Vet SIMD build
+        run: go vet ./...
+ -bench='BenchmarkCPU(Elementwise|MatMulReference)' -benchtime=1x -benchmem ./src/compute
   simd:
     name: SIMD experiment (${{ matrix.os }}, ${{ matrix.goarch }})
     strategy:
