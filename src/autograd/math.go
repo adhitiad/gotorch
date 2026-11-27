@@ -211,4 +211,3 @@ func errorsJoin(left, right error) error {
 	}
 	return fmt.Errorf("%v; %w", left, right)
 }
-
