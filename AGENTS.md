@@ -1,57 +1,85 @@
-# Agent Instructions — GoTorch
+# AGENTS.md — GoTorch Project Instructions
 
-Root instructions for all coding agents. More-specific nested `AGENTS.md` files may refine these; do not weaken root constraints. Read relevant `.agent/rules/*.md` before editing.
+These instructions are the repository-wide contract for every human or coding agent working in GoTorch. Read this file first, then read `docs/TASK.md` before selecting or implementing a task. More-specific nested `AGENTS.md` files may add rules but must not weaken these instructions.
 
-## Project / P0 context
+## 1. Project identity and architecture
 
-- Go-native **full deep-learning and computing framework** (tensor, autograd, NN, optim, training, inference, compiler, quantization, interoperability, distributed). Module: `github.com/adhitiad/gotorch` (`go.mod`: `go 1.27.4`).
-- **Hybrid CPU**: Pure Go is the correctness/portability reference; SIMD and BLAS/LAPACK are optional optimized paths selected by safe runtime capability detection.
-- **Distributed is first-class in contracts**, but local execution must not pay unnecessary distributed/network overhead.
+- GoTorch is a Go-native **full deep-learning and numerical-computing framework**: tensors, autograd, neural networks, optimizers, data, CPU compute, compiler, training, inference, quantization, model interoperability and distributed compute.
+- Module: `github.com/adhitiad/gotorch`. The declared Go toolchain baseline is in `go.mod`.
+- **Hybrid CPU:** Pure Go is the correctness/portability reference. SIMD and BLAS/LAPACK are optional optimized paths.
+- **Distributed by design:** distributed contracts are first-class; ordinary local operations must not incur network overhead.
 - Platforms: **Windows AMD64 primary**; Linux AMD64 and Linux ARM64 compatibility.
-- **No mandatory GPU/CUDA/DirectML/CGo/vendor SDK** in core. Do not claim performance wins without reproducible, fair benchmarks.
-- P0 foundation contracts are implemented in `errs`, `dtype`, `shape`, `tensor`, `storage`, `compute`, `runtime`, `distributed`, and `platform`. Tensor operations, concrete allocator, CPU kernels, SIMD, and distributed transport are not implemented yet. See `docs/ROADMAP.md`, `docs/CORE_CONTRACTS.md`, and `docs/P0_IMPLEMENTATION.md`.
+- No mandatory GPU/CUDA/DirectML/CGo/vendor SDK in core.
+- Do not claim a capability is implemented merely because an interface, package, config entry or document exists.
 
-## Commands
+## 2. Canonical task and instruction sources
+
+Read in this order:
+1. `AGENTS.md` (this file).
+2. `docs/TASK.md` — canonical phase checklist, task IDs, dependencies and acceptance criteria.
+3. The relevant documents under `docs/` and `docs/adr/`.
+4. Relevant `.agent/rules/*.md`.
+5. The matching portable skill under `.agents/skills/<skill>/SKILL.md`.
+6. Related workflows/templates under `.agent/`.
+
+Do not create a competing roadmap or maintain duplicate phase statuses in other files. When scope/status changes, update `docs/TASK.md` in the same PR/commit.
+
+## 3. Repository layout — mandatory
+
+- `src/<package>/`: all reusable Go framework implementation packages and their `*_test.go` files. New core packages must live under `src/`.
+- Package import paths therefore start with `github.com/adhitiad/gotorch/src/...`.
+- `cmd/<name>/main.go`: executable entry points and `package main` programs.
+- `app/<name>/`: application composition roots, service wiring, external adapters and app-specific orchestration.
+- Root `gotorch.go` and `gotorch_test.go`: the deliberately small public root-package facade retained for compatibility with imports of `github.com/adhitiad/gotorch`. Do not put framework internals here.
+- `go.mod`, `AGENTS.md`, documentation, community policies, CI and repository metadata stay at their current repository-level locations.
+- Do not create empty future-phase directories. Create a package when a real implementation task owns it.
+- Go test fixtures belong in the relevant package's `testdata/` directory.
+
+See [Repository Layout and Phase Plan](docs/TASK.md#2-repository-layout-and-source-code-placement).
+
+## 4. Task execution protocol
+
+- Select one unchecked task ID from `docs/TASK.md`; verify its dependencies first.
+- Check existing issues/PRs and branch state before changing files. Do not duplicate another agent's active task.
+- Work on `adhitiad_gpt` or a dedicated task/agent branch based on it. Integrate by PR when work is parallel.
+- Do not push directly to `main`, force-push, rewrite history or overwrite other agent work unless the repository owner explicitly authorizes it.
+- Keep changes scoped to the selected task. State public API, numerical, memory, concurrency, portability and security impacts.
+- Update tests, docs/ADR and the checklist with implementation changes.
+- Mark checklist items complete only after the relevant implementation and verification pass.
+- Report exact paths, commit/PR, commands, results, limitations and next unblocked task.
+
+## 5. Engineering constraints
+
+- Keep public APIs small, typed, explicit and documented. Avoid unnecessary exported internals and premature abstractions.
+- Validate dimensions, strides, offsets, allocation sizes and all multiplication/addition overflow before allocation or slicing.
+- Define dtype, layout, shape, aliasing, mutability, ownership, lifetime and concurrency semantics explicitly.
+- Every supported core operation must have a Pure Go reference implementation. Optimized kernels must be differentially tested against it.
+- Detect CPU features safely at runtime; never assume a host's SIMD support.
+- Bound goroutines, queues and memory. No goroutine-per-element or unbounded task fan-out.
+- Coordinate Go worker parallelism with BLAS threads. Never silently mutate process-wide `GOMAXPROCS`.
+- Honor `context.Context` cancellation at safe boundaries.
+- Distributed operations must define run/rank/world identity, collective ordering, deadlines, bounded payloads, retry/idempotency and failure/recovery semantics.
+- Authenticate remote worker control paths. Treat model files, checkpoints, datasets, graphs and remote messages as untrusted data.
+- Errors must preserve context and support `errors.Is`/`errors.As`. Do not panic for ordinary invalid user input.
+- Keep source files under 395 lines where practical; exceed only with a clear reason recorded in review.
+
+## 6. Verification commands
+
+Run focused tests while iterating; run all relevant checks before reporting completion.
 
 ```bash
-gofmt -w .                    # format
-go test ./...                 # tests
-go test -race ./...            # race (run for concurrency-sensitive changes)
-go vet ./...                  # vet
-go test -bench=. -benchmem ./...  # benchmarks
-make fmt|test|race|vet|check|bench # Makefile wrappers; check=test+vet
+gofmt -w .
+go test ./...
+go test -race ./...
+go vet ./...
+go test -bench=. -benchmem ./...
+GOOS=windows GOARCH=amd64 go build ./...
+GOOS=linux GOARCH=amd64 go build ./...
+GOOS=linux GOARCH=arm64 go build ./...
 ```
 
-- Use the Go version declared by `go.mod`; CI is the source of truth for the tested version matrix.
-- Run focused package tests while iterating; run full relevant checks before reporting done.
-- CI (`.github/workflows/ci.yml`): Windows AMD64, Linux AMD64, Linux ARM64 (`ubuntu-24.04-arm`), Go `1.27.x`, runs `go test ./...`, `go vet ./...`, and `go test -race ./...` on Linux only.
-- No `golangci-lint`/typecheck/codegen config is present; do not invent them. Use `gofmt` + `go test` + `go vet` (+ race/bench as relevant).
+Use the Go version declared by `go.mod`. CI in `.github/workflows/ci.yml` is the source of truth for native platform verification. Local cross-builds do not replace native CI.
 
-## Repo map / sources of truth
+## 7. Definition of done
 
-- `README.md` - concise project overview; detailed design in `docs/`.
-- `docs/` - architecture/contracts/roadmap/testing/platform/security; ADRs in `docs/adr/`.
-- `.agent/rules/` - mandatory domain rules (style, tensor/memory, compute/concurrency, distributed, testing/bench, security, docs/roadmap). `.agent/skills/`, `workflows/`, and `.agent/templates/` are task playbooks.
-- `CONTRIBUTING.md` - contributor workflow.
-
-## Engineering constraints
-
-- Keep public APIs small, explicit, documented. No unnecessary exported internals, no `interface{}` hot paths where typed dispatch fits, no premature generic abstractions that obscure kernel dispatch.
-- Validate shape/dimensions and `numel`/byte-size overflow before allocation. Define dtype/layout/shape/aliasing/ownership/lifetime/mutability/concurrency semantics explicitly.
-- Pure Go reference kernels required for supported core ops; optimized kernels must be differentially tested against the reference kernels. Never assume CPU/OS features; detect at runtime.
-- Bound goroutines/queues; no goroutine-per-element, no nested parallelism, coordinate Go workers with BLAS threads. Never silently change `GOMAXPROCS` or process-global config.
-- Never concurrently mutate shared gradient/output buffers without a defined reduction/partition strategy. Honor `context` cancellation at safe boundaries.
-- Distributed ops must define rank/world/run identity, collective semantics, deadlines/timeouts, bounded payloads, retry/idempotency, and failure/recovery behavior. No unauthenticated worker control endpoints.
-- Treat model files/checkpoints/datasets/graph defs/remote messages as untrusted: enforce size/rank/dimension/string/nesting/allocation limits; reject overflow/malformed offsets before allocation/slicing.
-- Errors preserve context and support `errors.Is`/`errors.As`; no panic for ordinary invalid input. Keep secrets out of logs/errors.
-- Code should be <395 lines per file; exceed only with a clear reason (from `.agent/rules/00-project-principles.md`).
-
-## Testing / docs / git
-
-- Tests: unit, boundary, overflow/aliasing/non-contiguous/zero-size, differential (optimized vs Pure Go), fuzz/property for shape/parsers/serialization/graph, race for concurrency-sensitive changes, distributed failure/timeout/cancellation/recovery when applicable. Benchmarks use `-benchmem` report hardware/OS/Go/CPU features/dtype/shape/thread settings.
-- Update docs/ADRs when contracts or subsystem boundaries change. Mark capabilities planned/implemented/experimental/deprecated honestly; do not mark roadmap phases implemented until acceptance criteria pass.
-- No force-push/history rewrite; do not modify `main` without explicit authorization. Keep commits focused. Do not claim commit/push/PR/merge unless verified.
-
-## Definition of done
-
-Implementation, tests, docs, compatibility impact, and exact verification commands/results are accounted for. A stub is not a completed feature. Report checks not run.
+A task is not done because code compiles once. Implementation, tests, docs, API impact, platform compatibility and exact verification evidence must be accounted for. Report checks not run. A phase is complete only when all its task checkboxes and exit gates in `docs/TASK.md` have been reviewed and satisfied.

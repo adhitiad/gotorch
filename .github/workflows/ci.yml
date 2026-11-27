@@ -34,6 +34,17 @@ jobs:
         shell: bash
         run: |
           test "$(go env GOARCH)" = "${{ matrix.goarch }}"
+      - name: Verify Go formatting
+        shell: bash
+        run: |
+          files=$(gofmt -l $(git ls-files '*.go'))
+          if [ -n "$files" ]; then
+            echo "Go files need gofmt:"
+            echo "$files"
+            exit 1
+          fi
+      - name: List packages
+        run: go list ./...
       - name: Test
         run: go test ./...
       - name: Vet
