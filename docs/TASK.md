@@ -1,13 +1,13 @@
 # GoTorch Engineering Task Plan — P0 to P13
 
-> **This is the canonical phase checklist for humans and coding agents.**  
+> **This is the canonical phase checklist for humans and coding agents.**
 > Project instructions: [`/AGENTS.md`](../AGENTS.md) · Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md) · Contracts: [`CORE_CONTRACTS.md`](CORE_CONTRACTS.md) · Detailed phase overview: [`ROADMAP.md`](ROADMAP.md)
 
-**Repository:** `github.com/adhitiad/gotorch`  
-**Development branch:** `adhitiad_gpt`  
-**Stable/release target:** `main`  
-**Current phase:** P0 — Foundation  
-**Current status:** P0 contracts and `src/` migration are implemented; native CI passed on Windows AMD64, Linux AMD64 and Linux ARM64. Maintainer API review remains required before P0 is closed.
+- **Repository:** `github.com/adhitiad/gotorch`
+- **Development branch:** `adhitiad_gpt`
+- **Stable/release target:** `main`
+- **Current phase:** P0 — Foundation
+- **Current status:** P0 foundation, source-layout migration, maintainer API review, and all P0 exit gates are complete. The reviewed commit passed native CI on Windows AMD64, Linux AMD64, and Linux ARM64. See [P0 API Review](P0_API_REVIEW.md) and [P0 implementation record](P0_IMPLEMENTATION.md).
 
 ---
 
@@ -133,7 +133,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Deliverables:** module/package conventions, public error taxonomy, dtype and shape definitions, tensor metadata, storage ownership contract, compute backend contract, runtime lifecycle, platform matrix, distributed identity, tests, CI, architecture documents, contributor and agent instructions.
 
-**Current status:** implementation is substantially present. The `src/` migration requires a fresh CI run; maintainer API review is still outstanding.
+**Current status:** maintainer review is complete, edge-case fixes are covered by regression tests, and the reviewed implementation passed the native three-platform CI matrix. See [P0 API Review](P0_API_REVIEW.md) for scope, findings, accepted constraints, and compatibility notes.
 
 - [x] `P00-001` Define module path, supported Go toolchain, architecture constraints and package naming.
 - [x] `P00-002` Define stable sentinel errors and wrapping conventions.
@@ -149,9 +149,9 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P00-012` Document architecture, contracts, platform and security boundaries.
 - [x] `P00-013` Establish cross-platform CI for Windows AMD64, Linux AMD64 and Linux ARM64.
 - [x] `P00-014` Move reusable Go packages into `src/`, update internal imports, and move portable skills into `.agents/skills/`.
-- [x] `P00-015` Verify the post-migration tree with native Windows AMD64, Linux AMD64 and Linux ARM64 CI ([GitHub Actions run](https://github.com/adhitiad/gotorch/actions/runs/45930296453) passed on commit `9132cee59991908c08691287689f51f753aa4626`).
-- [ ] `P00-016` Complete maintainer review of exported contracts, edge cases and API stability.
-- [ ] `P00-017` Close P0 only after all exit gates are satisfied and the checklist is reviewed.
+- [x] `P00-015` Verify the post-migration and maintainer-review fixes with native Windows AMD64, Linux AMD64 and Linux ARM64 CI ([GitHub Actions run](https://github.com/adhitiad/gotorch/actions/runs/45931933483) passed on reviewed implementation commit `7fa620879b36b16d618c994d1d5f94d925c95532`).
+- [x] `P00-016` Complete maintainer review of exported contracts, edge cases and API stability ([review record](P0_API_REVIEW.md)).
+- [x] `P00-017` Close P0 after all exit gates were verified, the phase checklist reviewed, and the maintainer decision recorded in the P0 review/implementation documents.
 
 **P0 is not a tensor engine.** No tensor arithmetic, concrete production allocator, CPU kernel library, SIMD implementation, BLAS binding, graph executor, trainer or distributed transport is claimed complete by P0.
 
