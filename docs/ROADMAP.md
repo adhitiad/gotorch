@@ -1,12 +1,12 @@
 # GoTorch Roadmap P0–P13
 
-Status labels: **Planned** until implementation and exit criteria are verified. This roadmap is not a claim that any phase is complete.
+Status labels: phases remain **Planned** until implementation and exit criteria are verified. P0 is currently **In Progress**; see [P0 Implementation](P0_IMPLEMENTATION.md).
 
 | Phase | Name | Main deliverable | Dependencies |
 |---|---|---|---|
-| P0 | Foundation | Module, contracts, errors, CI, architecture docs | — |
+| P0 | Foundation (in progress) | Module, contracts, errors, CI, architecture docs | — |
 | P1 | Tensor Engine | Storage, shape/stride, views, dtype, core ops | P0 |
-| P2 | Autograd | Reverse/forward AD, gradients, graph lifecycle | P1 |
+| P2 | Automatic Differentiation | Reverse/forward AD, gradients, graph lifecycle | P1 |
 | P3 | CPU Compute | Pure Go kernels, SIMD dispatch, BLAS adapters | P1 |
 | P4 | Scheduler & Memory | Bounded parallelism, allocator, lifetime planner | P1, P3 |
 | P5 | NN & Optimizers | Modules, layers, losses, SGD/Adam/AdamW | P2, P3, P4 |
@@ -23,7 +23,12 @@ Status labels: **Planned** until implementation and exit criteria are verified. 
 
 Deliver: module conventions, errors, platform abstraction, dtype/shape metadata contract, storage ownership contract, compute interfaces, runtime lifecycle, distributed identity contracts, test infrastructure, CI matrix, architecture documentation.
 
-Exit: core builds on Windows AMD64 and Linux AMD64; Linux ARM64 native test or documented cross-build; contracts reviewed; no mandatory CGo/vendor SDK.
+Current implementation checkpoint:
+- Foundation packages exist for `errs`, `dtype`, `shape`, `tensor` metadata, `storage`, `compute`, `runtime`, `distributed`, and `platform`.
+- Boundary tests cover dtype sizes, shape overflow and zero-size behavior, strided storage spans, lifecycle rollback/order, and distributed membership invariants.
+- The code intentionally does not implement tensor operations, allocators, CPU kernels, or distributed transport in P0.
+
+Exit: core builds on Windows AMD64 and Linux AMD64; Linux ARM64 native test or documented cross-build; contracts reviewed; no mandatory CGo/vendor SDK. See [P0 exit gates](P0_IMPLEMENTATION.md#p0-exit-gates).
 
 ## P1 — Tensor Engine
 
