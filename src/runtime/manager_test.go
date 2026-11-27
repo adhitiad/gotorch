@@ -5,6 +5,8 @@ import (
 	"errors"
 	"reflect"
 	"testing"
+
+	"github.com/adhitiad/gotorch/src/errs"
 )
 
 type testComponent struct {
@@ -82,5 +84,22 @@ func TestManagerRejectsDuplicateNames(t *testing.T) {
 	_, err := NewManager(testComponent{name: "same", log: &log}, testComponent{name: "same", log: &log})
 	if err == nil {
 		t.Fatal("duplicate component name accepted")
+	}
+}
+
+type nilTestComponent struct{}
+
+func (*nilTestComponent) Name() string { return "nil" }
+func (*nilTestComponent) Start(context.Context) error {
+	return nil
+}
+func (*nilTestComponent) Stop(context.Context) error {
+	return nil
+}
+
+func TestManagerRejectsTypedNilComponent(t *testing.T) {
+	var component *nilTestComponent
+	if _, err := NewManager(component); !errors.Is(err, errs.ErrInvalidArgument) {
+		t.Fatalf("got %v, want ErrInvalidArgument", err)
 	}
 }

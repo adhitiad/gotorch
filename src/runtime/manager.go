@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"sync"
 
@@ -54,7 +55,7 @@ func NewManager(components ...Component) (*Manager, error) {
 	seen := make(map[string]struct{}, len(components))
 	copied := append([]Component(nil), components...)
 	for i, component := range copied {
-		if component == nil || strings.TrimSpace(component.Name()) == "" {
+		if isNilComponent(component) || strings.TrimSpace(component.Name()) == "" {
 			return nil, fmt.Errorf("%w: component %d is nil or unnamed", errs.ErrInvalidArgument, i)
 		}
 		name := component.Name()
@@ -76,7 +77,7 @@ func (m *Manager) State() State {
 // Start initializes components in order. A failed start triggers reverse cleanup
 // of components that already started; a failed manager cannot be restarted.
 func (m *Manager) Start(ctx context.Context) error {
-	if ctx == nil {
+	if isNilComponent(ctx) {
 		return fmt.Errorf("%w: nil context", errs.ErrInvalidArgument)
 	}
 	m.operation.Lock()
@@ -110,8 +111,10 @@ func (m *Manager) Start(ctx context.Context) error {
 }
 
 // Close stops every started component in reverse order. It is idempotent.
+// The supplied context is passed to each Stop call; use a live cleanup context
+// when teardown must continue after a request or startup context is cancelled.
 func (m *Manager) Close(ctx context.Context) error {
-	if ctx == nil {
+	if isNilComponent(ctx) {
 		return fmt.Errorf("%w: nil context", errs.ErrInvalidArgument)
 	}
 	m.operation.Lock()
@@ -162,4 +165,17 @@ func (m *Manager) setState(state State) {
 	m.mu.Lock()
 	m.state = state
 	m.mu.Unlock()
+}
+
+func isNilComponent(component any) bool {
+	if component == nil {
+		return true
+	}
+	v := reflect.ValueOf(component)
+	switch v.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return v.IsNil()
+	default:
+		return false
+	}
 }

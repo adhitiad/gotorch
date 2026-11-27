@@ -1,6 +1,6 @@
 # P0 — Foundation Implementation
 
-**Status: source-layout migration and native three-platform CI passed; maintainer API review remains open.** This phase defines the stable contracts on which later work depends. It does not complete the full framework.
+**Status: P0 closed on 2026-11-27.** The maintainer API review is complete, the edge-case fixes are regression-tested, and the reviewed implementation passed native CI on Windows AMD64, Linux AMD64, and Linux ARM64. See [P0 API Review](P0_API_REVIEW.md). This phase defines the foundation contracts on which later work depends; it does not complete the full framework.
 
 ## Scope delivered
 
@@ -64,7 +64,7 @@ The repository's declared Go toolchain in `go.mod` and native CI are authoritati
 
 ## Prior CI evidence
 
-The P0 foundation-contract commit `d5f0af9a039635320fd6b1622c2b33b4ce2640a7` passed the native GitHub Actions matrix on Windows AMD64, Linux AMD64 and Linux ARM64. The subsequent `src/` relocation changes package import paths and must pass a fresh CI run before P0 can close.
+The reviewed implementation commit `7fa620879b36b16d618c994d1d5f94d925c95532` passed [GitHub Actions run `45931933483`](https://github.com/adhitiad/gotorch/actions/runs/45931933483) on all three native platforms. Formatting, package discovery, tests and vet passed on Windows AMD64, Linux AMD64 and Linux ARM64; race tests also passed on both Linux runners. The maintainer review and edge-case regression tests are recorded in [`P0_API_REVIEW.md`](P0_API_REVIEW.md).
 
 ## P0 exit gates
 
@@ -73,7 +73,7 @@ The P0 foundation-contract commit `d5f0af9a039635320fd6b1622c2b33b4ce2640a7` pas
 - [x] Native Windows AMD64, Linux AMD64 and Linux ARM64 CI passed for the pre-migration P0 commit.
 - [x] Root task/agent workflow and portable skill directory are defined.
 - [x] The new `src/` package layout passes fresh native Windows AMD64, Linux AMD64 and Linux ARM64 CI ([run `45930296453`](https://github.com/adhitiad/gotorch/actions/runs/45930296453), commit `9132cee59991908c08691287689f51f753aa4626)).
-- [ ] Maintainer review of exported contracts, edge cases and API stability is complete.
-- [ ] P0 checklist in [`TASK.md`](TASK.md) is reviewed and phase closure is approved.
+- [x] Maintainer review of exported contracts, edge cases and API stability is complete ([review record](P0_API_REVIEW.md)).
+- [x] P0 checklist in [`TASK.md`](TASK.md) is reviewed and phase closure is recorded.
 
-Do not mark P0 complete until every remaining exit gate is satisfied.
+**P0 closure decision:** all exit gates are satisfied. The API remains pre-1.0 and evolving; this closure approves the foundation contracts for dependent implementation phases, not a permanent compatibility guarantee.

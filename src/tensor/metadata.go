@@ -41,7 +41,8 @@ type Metadata struct {
 	layout  Layout
 }
 
-// NewMetadata creates metadata with row-major contiguous strides.
+// NewMetadata creates metadata with row-major contiguous strides. Empty tensors
+// use zero strides because no element address is reachable.
 func NewMetadata(elementType dtype.DType, dimensions shape.Shape) (Metadata, error) {
 	strides, err := contiguousStrides(dimensions)
 	if err != nil {
@@ -177,6 +178,14 @@ func (m Metadata) isContiguous() bool {
 
 func contiguousStrides(dimensions shape.Shape) ([]int64, error) {
 	dims := dimensions.Dims()
+	numel, err := dimensions.Numel()
+	if err != nil {
+		return nil, err
+	}
+	if numel == 0 {
+		return make([]int64, len(dims)), nil
+	}
+
 	strides := make([]int64, len(dims))
 	stride := int64(1)
 	for axis := len(dims) - 1; axis >= 0; axis-- {

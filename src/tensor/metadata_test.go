@@ -58,6 +58,26 @@ func TestScalarAndEmptyMetadata(t *testing.T) {
 	}
 }
 
+func TestEmptyMetadataWithUnrepresentableContiguousSuffix(t *testing.T) {
+	s, err := shape.New(0, math.MaxInt64, 2)
+	if err != nil {
+		t.Fatal(err)
+	}
+	m, err := NewMetadata(dtype.Float32, s)
+	if err != nil {
+		t.Fatalf("empty metadata should not require addressable suffix strides: %v", err)
+	}
+	if got, want := m.Strides(), []int64{0, 0, 0}; !equal(got, want) {
+		t.Fatalf("empty strides = %v, want canonical zero strides %v", got, want)
+	}
+	if m.Layout() != LayoutContiguous {
+		t.Fatalf("empty layout = %v, want contiguous", m.Layout())
+	}
+	if got, err := m.RequiredBytes(); err != nil || got != 0 {
+		t.Fatalf("empty required bytes = %d, %v; want 0, nil", got, err)
+	}
+}
+
 func TestMetadataRejectsInvalidAndOverflow(t *testing.T) {
 	s, _ := shape.New(2, 2)
 	if _, err := NewStridedMetadata(dtype.Float32, s, []int64{1}); err == nil {
