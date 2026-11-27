@@ -6,13 +6,8 @@
 - **Repository:** `github.com/adhitiad/gotorch`
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
-<<<<<<< HEAD
-- **Current phase:** P2 — Automatic Differentiation
-- **Current status:** P0 and P1 are closed. P1-001 through P1-011 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. See [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
-=======
 - **Current phase:** P3 — CPU Compute
 - **Current status:** P0, P1 and P2 are implemented and verified. P2 provides a Go-native reverse/forward automatic-differentiation engine, gradient lifecycle, custom VJP/JVP rules and finite-difference checks. The native Go 1.27 matrix passed on Windows AMD64, Linux AMD64 and Linux ARM64; see [Autograd API](AUTOGRAD_API.md), [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
->>>>>>> origin/main
 
 ---
 ## 1. Project definition
@@ -190,20 +185,6 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior ([review](P1_API_REVIEW.md)).
 - [x] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles ([review and CI](P1_API_REVIEW.md)).
 - [x] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing ([review and CI](P1_API_REVIEW.md)).
-<<<<<<< HEAD
-- [x] `P01-004` Implement row-major indexing and checked multidimensional offset calculation ([metadata API](TENSOR_API.md#typed-access-and-indexing)).
-- [x] `P01-005` Implement views and define aliasing/overlapping-write rules ([view semantics](TENSOR_API.md#views-and-aliasing)).
-- [x] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations ([view API](TENSOR_API.md#views-and-aliasing)).
-- [x] `P01-007` Implement broadcast shape inference and validation ([broadcast API](TENSOR_API.md#views-and-aliasing)).
-- [x] `P01-008` Implement contiguous conversion and explicit copy semantics ([copy API](TENSOR_API.md#copy-and-contiguous-conversion)).
-- [x] `P01-009` Add property tests for indexing, stride, view aliasing and round-trip reshape ([property tests](../src/tensor/metadata_ops_test.go)).
-- [x] `P01-010` Add benchmarks for allocation, view creation, indexing and copy ([benchmarks](../src/tensor/tensor_bench_test.go)).
-- [x] `P01-011` Document public Tensor API and ownership examples ([Tensor API](TENSOR_API.md), [ownership review](P1_TENSOR_OWNERSHIP.md)).
-
-**P1 exit gates:** overflow and bounds checks are covered; views retain storage; aliasing behavior is deterministic and documented; scalar, empty, contiguous and non-contiguous cases pass; Linux race tests pass; the native Windows AMD64/Linux AMD64/Linux ARM64 CI matrix passes. The final verification run is [Go CI 45937237974](https://github.com/adhitiad/gotorch/actions/runs/45937237974); benchmark smoke ran on Linux AMD64.
-
-**Accepted limits:** negative strides are not supported; `Reshape` is a view and requires contiguous input; bulk writes to overlapping broadcast layouts return `errs.ErrOverlappingWrite`; custom-storage strided writes are not transactional; the versioned binary snapshot is pre-1.0 and is not a permanent checkpoint compatibility promise. Tensor arithmetic and CPU kernels are later-phase work.
-=======
 - [x] `P01-004` Implement row-major indexing and checked multidimensional offset calculation ([metadata API](TENSOR_API.md#typed-access-and-indexing)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
 - [x] `P01-005` Implement views and define aliasing/overlapping-write rules ([view semantics](TENSOR_API.md#views-and-aliasing)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
 - [x] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations ([view API](TENSOR_API.md#views-and-aliasing)) ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
@@ -216,7 +197,6 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 **P1 exit gates:** overflow and bounds checks are covered; views retain storage; aliasing behavior is deterministic and documented; scalar, empty, contiguous and non-contiguous cases pass; Linux race tests pass; the native Windows AMD64/Linux AMD64/Linux ARM64 CI matrix passes. The latest follow-up verification for the empty-view fix is [Go CI 45939341927](https://github.com/adhitiad/gotorch/actions/runs/45939341927) and [Documentation validation 45939341916](https://github.com/adhitiad/gotorch/actions/runs/45939341916); the focused fix run is [Go CI 45939252569](https://github.com/adhitiad/gotorch/actions/runs/45939252569). The benchmark smoke job is now part of the canonical Go CI workflow.
 
 **Accepted limits:** negative strides are not supported; `Reshape` is a view and requires contiguous input; bulk writes to overlapping broadcast layouts return `errs.ErrOverlappingWrite`; custom-storage strided writes are not transactional; empty views may retain a base offset past the last reachable source element because they never dereference storage; the versioned binary snapshot is pre-1.0 and is not a permanent checkpoint compatibility promise. Tensor arithmetic and CPU kernels are later-phase work.
->>>>>>> origin/main
 
 ### P2 — Automatic Differentiation
 
