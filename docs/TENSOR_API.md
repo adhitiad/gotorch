@@ -74,6 +74,8 @@ Every view retains the backing allocation. Closing the source does not invalidat
 
 Negative strides are not supported. Slicing never reverses an axis. Reshaping a non-contiguous view returns `errs.ErrUnsupportedOperation`; call `Copy` or `Contiguous` first.
 
+An empty view has no addressable element. Slicing or narrowing to zero length is allowed even when the resulting base position lies at or past the end of the source's reachable span; reads and writes on the empty view are empty operations.
+
 ### Overlapping writes
 
 Broadcast views may map multiple logical indices to one physical element. `Read`, `At` and `Set` are supported. Bulk `Write` is rejected before modifying storage when the layout is detected as overlapping or cannot be proven non-overlapping; the error is `errs.ErrOverlappingWrite`. `Set` targets one explicit logical index, so any aliases of that physical element observe the update.

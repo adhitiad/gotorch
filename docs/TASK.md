@@ -7,7 +7,7 @@
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
 - **Current phase:** P1 — Tensor Engine
-- **Current status:** P0 is closed. P1-001 through P1-003 are implemented, reviewed, and pass the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64. P1 continues with P01-004 onward; see [P1 API Review](P1_API_REVIEW.md).
+- **Current status:** P0 is closed. P1 is implemented, reviewed, and passes the native Go 1.27 CI matrix on Windows AMD64, Linux AMD64, and Linux ARM64; see [P1 API Review](P1_API_REVIEW.md).
 
 ---
 ## 1. Project definition
@@ -165,14 +165,14 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P01-001` Design `Tensor` ownership, close/release semantics and zero value behavior ([review](P1_API_REVIEW.md)).
 - [x] `P01-002` Implement a Pure Go heap-backed storage allocator and independently retained handles ([review and CI](P1_API_REVIEW.md)).
 - [x] `P01-003` Implement tensor constructors and typed data access without unsafe aliasing ([review and CI](P1_API_REVIEW.md)).
-- [ ] `P01-004` Implement row-major indexing and checked multidimensional offset calculation.
-- [ ] `P01-005` Implement views and define aliasing/overlapping-write rules.
-- [ ] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations.
-- [ ] `P01-007` Implement broadcast shape inference and validation.
-- [ ] `P01-008` Implement contiguous conversion and explicit copy semantics.
-- [ ] `P01-009` Add property tests for indexing, stride, view aliasing and round-trip reshape.
-- [ ] `P01-010` Add benchmarks for allocation, view creation, indexing and copy.
-- [ ] `P01-011` Document public Tensor API and ownership examples.
+- [x] `P01-004` Implement row-major indexing and checked multidimensional offset calculation ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-005` Implement views and define aliasing/overlapping-write rules ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-006` Implement slice, narrow/select, reshape and transpose metadata operations ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-007` Implement broadcast shape inference and validation ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-008` Implement contiguous conversion and explicit copy semantics ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-009` Add property tests for indexing, stride, view aliasing and round-trip reshape ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-010` Add benchmarks for allocation, view creation, indexing and copy ([review](P1_API_REVIEW.md#p01-004-through-p01-011-completion-review)).
+- [x] `P01-011` Document public Tensor API and ownership examples ([Tensor API](TENSOR_API.md), [ownership semantics](P1_TENSOR_OWNERSHIP.md)).
 
 **Exit gates:** no overflow or out-of-bounds access; views retain storage; aliasing behavior is deterministic and documented; scalar, empty, contiguous and non-contiguous cases pass; tests pass under race detector.
 

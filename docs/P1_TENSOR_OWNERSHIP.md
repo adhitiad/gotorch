@@ -36,6 +36,7 @@
 - `BroadcastTo` right-aligns dimensions; expanded dimensions use zero strides.
 - Every Tensor view retains its backing allocation independently. Mutations are visible through every alias.
 - Negative strides are not supported. Empty, scalar, contiguous and positive-stride non-contiguous tensors are supported.
+- An empty view has no addressable element, so its base offset may sit at or past the source's last reachable element (for example the end position of a positive-step slice). Reads and writes on an empty view are empty operations and never access storage.
 - Bulk `Write` rejects overlapping or conservatively uncertain layouts with `errs.ErrOverlappingWrite` before changing any element. `Set` remains deterministic for one explicit logical index, including on broadcast aliases.
 - For non-overlapping strided layouts, bulk Write scatters row-major logical values to their physical locations. A custom Storage failure during a scatter may leave earlier elements written; there is no multi-element transaction guarantee.
 

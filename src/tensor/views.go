@@ -33,7 +33,14 @@ func (t *Tensor) viewLocked(metadata Metadata, offset int64) (*Tensor, error) {
 	if err != nil {
 		return nil, err
 	}
-	if offset < t.offset || offset > sourceEnd || viewEnd > sourceEnd || viewEnd > t.storage.Size() {
+	// An empty view has no addressable element. Its base offset may therefore sit
+	// past the source's last reachable element (for example the end position of a
+	// positive-step slice) without being an out-of-bounds access. Non-empty views
+	// must stay inside the source's reachable span.
+	if offset < t.offset {
+		return nil, errs.ErrOutOfBounds
+	}
+	if viewSpan > 0 && (offset > sourceEnd || viewEnd > sourceEnd) {
 		return nil, errs.ErrOutOfBounds
 	}
 	handle, err := t.storage.Retain()
