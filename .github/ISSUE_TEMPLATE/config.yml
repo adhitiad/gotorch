@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Questions and community support
+    url: https://github.com/adhitiad/gotorch/discussions
+    about: Ask usage and design questions in GitHub Discussions.
+  - name: Security vulnerability
+    url: https://github.com/adhitiad/gotorch/security/advisories/new
+    about: Report vulnerabilities privately. Do not publish exploit details in an issue.
