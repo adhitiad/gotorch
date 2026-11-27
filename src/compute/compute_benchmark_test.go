@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"runtime"
+	"sync"
+	"sync/atomic"
 	"testing"
 
 	"github.com/adhitiad/gotorch/src/dtype"
@@ -213,17 +215,41 @@ func BenchmarkCPUOpenBLASMatMul(b *testing.B) {
 						benchmarkCheckDifferential(b, backend, spec, verifyCall.Inputs, verifyOut)
 						a := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{n, n}, nil), 1)
 						bb := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{n, n}, nil), 2)
-						out := benchmarkOutput(b, dt, n, n)
-						call := Invocation{Inputs: []Argument{a, bb}, Outputs: []Argument{out}}
+						calls := make([]Invocation, workers)
+						for worker := range calls {
+							out := benchmarkOutput(b, dt, n, n)
+							calls[worker] = Invocation{Inputs: []Argument{a, bb}, Outputs: []Argument{out}}
+						}
 						width, _ := dt.Size()
 						b.SetBytes(2*n*n*width + n*n*width)
 						effectiveThreads := (ExecutionPolicy{GoWorkers: workers, BLASThreads: threads}).EffectiveBLASThreads()
 						b.ReportAllocs()
+						ctx := context.Background()
+						var next atomic.Int64
+						var wg sync.WaitGroup
+						errCh := make(chan error, workers)
 						b.ResetTimer()
-						for i := 0; i < b.N; i++ {
-							if err := Run(context.Background(), backend, spec, call); err != nil {
-								b.Fatal(err)
-							}
+						for _, call := range calls {
+							wg.Add(1)
+							go func(call Invocation) {
+								defer wg.Done()
+								for {
+									if next.Add(1) > int64(b.N) {
+										return
+									}
+									if err := Run(ctx, backend, spec, call); err != nil {
+										errCh <- err
+										return
+									}
+								}
+							}(call)
+						}
+						wg.Wait()
+						b.StopTimer()
+						select {
+						case err := <-errCh:
+							b.Fatal(err)
+						default:
 						}
 						b.ReportMetric(float64(effectiveThreads), "effective-blas-threads")
 						b.ReportMetric(2*float64(n*n*n)*float64(b.N)/b.Elapsed().Seconds(), "FLOP/s")

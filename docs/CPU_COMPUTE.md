@@ -267,7 +267,7 @@ A `compute.Invocation` borrows its storage handles for the duration of `Execute`
 # Save outputs separately and use benchstat when it is installed.
 ```
 
-The elementwise suite covers add/mul, float32/float64, contiguous and strided inputs, and 256/4K/64K elements. SIMD is naturally skipped for strided inputs it does not support. Reference matmul covers contiguous and padded-row strided inputs at 8x8, 32x32 and 64x64. The optional real OpenBLAS suite covers 32x32, 128x128 and 256x256 GEMM with Go worker and configured BLAS thread counts of 1, 2 and 4; it records the effective thread count after the execution-policy cap.
+The elementwise suite covers add/mul, float32/float64, contiguous and strided inputs, and 256/4K/64K elements. SIMD is naturally skipped for strided inputs it does not support. Reference matmul covers contiguous and padded-row strided inputs at 8x8, 32x32 and 64x64. The optional real OpenBLAS suite covers 32x32, 128x128 and 256x256 GEMM with 1, 2 or 4 actual concurrent Go worker goroutines and configured BLAS thread counts of 1, 2 and 4; each goroutine has its own output buffer, and the suite records the effective thread count after the execution-policy cap. This exercises contention around OpenBLAS process-global thread configuration, not only the arithmetic call.
 
 Every benchmark verifies one untimed result against the Pure Go reference using the operation/dtype tolerance before starting the timer. Setup, allocation of input/output tensors, and differential checking are excluded from timed iterations. Timed iterations include the backend's real storage staging and output writes. Thus these results measure the current storage contract end-to-end, not an isolated vendor-kernel peak.
 
