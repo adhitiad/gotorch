@@ -1,16 +1,15 @@
 # GoTorch Engineering Task Plan — P0 to P13
 
-> **This is the canonical phase checklist for humans and coding agents.**
+> **This is the canonical phase checklist for humans and coding agents.**  
 > Project instructions: [`/AGENTS.md`](../AGENTS.md) · Architecture: [`ARCHITECTURE.md`](ARCHITECTURE.md) · Contracts: [`CORE_CONTRACTS.md`](CORE_CONTRACTS.md) · Detailed phase overview: [`ROADMAP.md`](ROADMAP.md)
 
 - **Repository:** `github.com/adhitiad/gotorch`
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
-- **Current phase:** P0 — Foundation
-- **Current status:** P0 foundation, source-layout migration, maintainer API review, and all P0 exit gates are complete. The reviewed commit passed native CI on Windows AMD64, Linux AMD64, and Linux ARM64. See [P0 API Review](P0_API_REVIEW.md) and [P0 implementation record](P0_IMPLEMENTATION.md).
+- **Current phase:** P1 — Tensor Engine
+- **Current status:** P0 is closed. P1-001 through P1-003 implementation is in progress on `adhitiad_gpt`; task checkboxes remain open until the native platform CI and review gates pass.
 
 ---
-
 ## 1. Project definition
 
 GoTorch is a Go-native, full deep-learning and numerical-computing framework. It is not limited to model inference. The intended system covers tensor storage and operations, automatic differentiation, neural-network modules, optimizers, data pipelines, CPU execution, graph compilation, training, inference, quantization, model interoperability, and distributed execution.
