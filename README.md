@@ -4,7 +4,33 @@
 
 GoTorch is designed as a full deep-learning framework with a CPU-first hybrid compute engine and first-class distributed-computing architecture.
 
-> **Project status:** P0 foundation contracts and the `src/` source-layout migration have passed native CI on Windows AMD64, Linux AMD64 and Linux ARM64. Maintainer review of public contracts remains before P0 closure. The full Tensor Engine, autograd system, CPU kernel library, and distributed runtime are not yet complete. See [the P0 checkpoint](docs/P0_IMPLEMENTATION.md) and [the canonical P0–P13 task plan](docs/TASK.md).
+> **Project status:** P0 Foundation is closed. The foundation contracts and `src/` layout have passed native CI on Windows AMD64, Linux AMD64 and Linux ARM64. The Tensor Engine, autograd system, CPU kernel library, and distributed runtime are not yet complete. This is an early foundation preview, not a production-ready deep-learning framework. See the [P0 implementation record](docs/P0_IMPLEMENTATION.md), [maintainer API review](docs/P0_API_REVIEW.md), and [canonical P0–P13 task plan](docs/TASK.md).
+
+## Module and package documentation
+
+- **Go module:** `github.com/adhitiad/gotorch`
+- **Documentation:** [pkg.go.dev/github.com/adhitiad/gotorch](https://pkg.go.dev/github.com/adhitiad/gotorch)
+- **First preview target:** `v0.1.0-alpha.1`
+
+The first public preview is intentionally versioned before `v1.0.0`. Exported APIs may change while the framework is developed; this release does not promise backward compatibility.
+
+After the `v0.1.0-alpha.1` tag is published, install the module with:
+
+```bash
+go get github.com/adhitiad/gotorch@v0.1.0-alpha.1
+```
+
+The root module provides a small compatibility facade. Reusable framework APIs are currently organized under `src/`, for example:
+
+```go
+import (
+	"github.com/adhitiad/gotorch/src/dtype"
+	"github.com/adhitiad/gotorch/src/shape"
+	"github.com/adhitiad/gotorch/src/tensor"
+)
+```
+
+See [docs/PUBLISHING.md](docs/PUBLISHING.md) for the Go module release and pkg.go.dev indexing procedure.
 
 ## Fundamental decisions
 
@@ -13,7 +39,6 @@ GoTorch is designed as a full deep-learning framework with a CPU-first hybrid co
 - **Distributed:** first-class in architecture, without imposing network overhead on local execution.
 - **Platforms:** Windows AMD64 primary; Linux AMD64 and Linux ARM64 compatibility.
 - **Accelerators:** optional future extensions. GPU is not a core dependency or early implementation priority.
-- **Module path:** `github.com/adhitiad/gotorch`.
 
 ## Architecture
 
@@ -75,7 +100,7 @@ Use the repository-level `AGENTS.md` as the common instruction entry point. It p
 
 ## Development status
 
-P0 currently establishes typed metadata, error, storage ownership, compute backend, runtime lifecycle, platform and distributed identity contracts. It does not implement tensor arithmetic, concrete memory allocation, reference CPU kernels, SIMD/BLAS execution or distributed transport. A production capability exists only after its implementation, tests and phase exit criteria pass.
+P0 establishes typed metadata, error, storage ownership, compute backend, runtime lifecycle, platform and distributed identity contracts. It does not implement tensor arithmetic, concrete memory allocation, reference CPU kernels, SIMD/BLAS execution or distributed transport. A production capability exists only after its implementation, tests and phase exit criteria pass.
 
 ## Toolchain and commands
 
