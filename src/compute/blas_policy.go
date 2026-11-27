@@ -12,13 +12,16 @@ import (
 // ExecutionPolicy budgets process-wide BLAS threads against concurrent GoTorch workers.
 // GoWorkers is the maximum number of GoTorch operations that may enter compute concurrently.
 type ExecutionPolicy struct {
-	GoWorkers  int
+	GoWorkers   int
 	BLASThreads int
 }
 
 // DefaultExecutionPolicy gives one operation the available logical processors.
 func DefaultExecutionPolicy() ExecutionPolicy {
-	return ExecutionPolicy{GoWorkers: 1, BLASThreads: runtime.GOMAXPROCS(0)}
+	return ExecutionPolicy{
+		GoWorkers:   1,
+		BLASThreads: runtime.GOMAXPROCS(0),
+	}
 }
 
 // Validate rejects ambiguous zero or negative concurrency limits.
