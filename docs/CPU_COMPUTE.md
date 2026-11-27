@@ -32,6 +32,18 @@ GoTorch uses `golang.org/x/sys/cpu` as its single runtime detector. `compute.Det
 
 Dispatch must account for architecture, CPU feature availability, OS state support, dtype, layout, shape, alignment and workload size. Small operations may remain scalar to avoid dispatch and scheduling overhead.
 
+## Architecture-isolated SIMD kernels
+
+The first experimental SIMD backend is opt-in at build time with `GOEXPERIMENT=simd` and is isolated by Go build constraints:
+
+- AMD64 uses 256-bit `simd/archsimd` float32x8/float64x4 operations and is selected only when the runtime snapshot reports AVX2 (which also guarantees AVX).
+- ARM64 uses 128-bit NEON float32x4/float64x2 operations and is selected only when the runtime snapshot reports ASIMD.
+- Other architectures, builds without the experiment, and unsupported CPUs expose no SIMD backend; the default registry always retains the Pure Go reference backend.
+- The initial optimized operation set is contiguous float32/float64 add, subtract and multiply. Other operations, strided layouts, unsupported dtypes and workloads smaller than 32 elements stay on the scalar backend.
+- The initial storage abstraction requires staging bytes into typed slices before SIMD execution. This prioritizes safe, architecture-isolated correctness; benchmark and storage-mapping work must measure whether the staging cost is worthwhile before widening dispatch.
+- SIMD types never appear in GoTorch's public API. The Go standard-library SIMD API is experimental and is not enabled for ordinary builds.
+
+The CI matrix runs both the normal build and a separate `GOEXPERIMENT=simd` build on Windows AMD64, Linux AMD64 and Linux ARM64. Differential tests compare every implemented SIMD operation against the Pure Go reference using `DefaultTolerance`, including a non-vector-aligned tail.
 ## BLAS / LAPACK
 
 [Gonum](https://github.com/gonum/gonum) is the first Go-native numerical library to evaluate. Its `blas/gonum` package is a Pure Go BLAS implementation with documented incomplete float32/float64 coverage. Its `blas64` and `blas32` packages wrap BLAS implementations.
