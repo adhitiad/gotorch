@@ -61,7 +61,7 @@ The adapter requires the CBLAS GEMM symbols and OpenBLAS thread getter/setter sy
 
 `ExecutionPolicy` specifies the maximum concurrent GoTorch workers and configured BLAS thread ceiling. The effective BLAS count is `min(BLASThreads, max(1, GOMAXPROCS/GoWorkers))`. The backend serializes each process-global OpenBLAS set/call/restore transaction, preserving the prior thread count and avoiding races between GoTorch callers. This is intentionally conservative until P04 provides a central scheduler/BLAS lease. It does not modify `GOMAXPROCS`. Callers must stop dispatching before closing the backend.
 
-CI compiles and tests the tagged adapter on Windows AMD64, Linux AMD64 and Linux ARM64 without requiring a native OpenBLAS installation; mock CBLAS functions exercise numerical parity and thread-budget behavior. A real OpenBLAS library integration test remains environment-dependent.
+CI compiles and tests the tagged adapter on Windows AMD64, Linux AMD64 and Linux ARM64 without requiring a native OpenBLAS installation; mock CBLAS functions exercise numerical parity and thread-budget behavior. The tagged build is also tested with `CGO_ENABLED=0` so the optional adapter does not introduce a CGo requirement. A real OpenBLAS library integration test remains environment-dependent.
 
 ## Dispatch
 
