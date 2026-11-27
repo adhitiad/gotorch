@@ -222,6 +222,20 @@ The purpose of this guide is to help users reuse existing tools while keeping th
 
 **Current focus:** complete Tensor correctness first, then CPU scalar kernels and SIMD acceleration. GPU, CGo, XLA and distributed execution remain optional integrations or later phases. Do not let an external framework become a hidden mandatory dependency of GoTorch.
 
+## 7. Contribution guidance
+
+When proposing a new dependency or adapter, include:
+
+1. Exact module/package path and license.
+2. Supported Go version, operating systems and CPU architectures.
+3. Whether it is Pure Go, assembly, CGo, Rust FFI, or an external shared runtime.
+4. Dtype/layout coverage and numerical behavior.
+5. Benchmarks versus the current Pure Go implementation.
+6. The scalar fallback and behavior when the optional dependency is unavailable.
+7. Maintenance activity and versioning/compatibility risk.
+
+Do not describe an external project's feature as a GoTorch feature until an implementation, tests, documentation and phase acceptance criteria exist.
+
 ## 8. GoTorch first-party Go implementation target
 
 This guide describes the **existing external ecosystem**. GoTorch's own commitment is different: the roadmap now targets native Go implementations of the five capability groups commonly associated with Transformers, PEFT, bitsandbytes, TRL and Accelerate.
@@ -239,17 +253,3 @@ This guide describes the **existing external ecosystem**. GoTorch's own commitme
 **Implementation rule:** GoTorch-owned runtime paths must be Go. Python-first libraries and external Go projects in this guide are useful research/reference options, but they are not implementation shortcuts, mandatory dependencies, or evidence of GoTorch feature completion. The required CPU path must work without a Python interpreter, Python subprocess, CGo, Rust, C or C++ runtime. Pure Go scalar kernels remain the correctness baseline; optimized SIMD paths must keep a tested fallback.
 
 The project promises documented support for specific architectures, tokenizers, weight layouts, dtypes and training objectives—not blanket API or behavioral parity with the Python libraries whose workflows inspired the feature set.
-
-## 7. Contribution guidance
-
-When proposing a new dependency or adapter, include:
-
-1. Exact module/package path and license.
-2. Supported Go version, operating systems and CPU architectures.
-3. Whether it is Pure Go, assembly, CGo, Rust FFI, or an external shared runtime.
-4. Dtype/layout coverage and numerical behavior.
-5. Benchmarks versus the current Pure Go implementation.
-6. The scalar fallback and behavior when the optional dependency is unavailable.
-7. Maintenance activity and versioning/compatibility risk.
-
-Do not describe an external project's feature as a GoTorch feature until an implementation, tests, documentation and phase acceptance criteria exist.
