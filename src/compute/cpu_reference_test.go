@@ -205,6 +205,9 @@ func TestRegistryCloseOwnsBackendLifecycle(t *testing.T) {
 	if backend.closeCalls != 1 {
 		t.Fatalf("close calls=%d, want 1", backend.closeCalls)
 	}
+	if names := registry.Backends(); names != nil {
+		t.Fatalf("backends after close = %v, want nil", names)
+	}
 	if err := registry.Close(); err != nil {
 		t.Fatalf("second close: %v", err)
 	}
@@ -244,5 +247,14 @@ func TestRegistryCloseAggregatesBackendErrors(t *testing.T) {
 	}
 	if first.closeCalls != 1 || second.closeCalls != 1 {
 		t.Fatalf("close calls first=%d second=%d, want 1 each", first.closeCalls, second.closeCalls)
+	}
+	if names := registry.Backends(); names != nil {
+		t.Fatalf("backends after failed close = %v, want nil", names)
+	}
+	if err := registry.Close(); !errors.Is(err, firstErr) || !errors.Is(err, secondErr) {
+		t.Fatalf("second close error=%v, want cached backend failures", err)
+	}
+	if first.closeCalls != 1 || second.closeCalls != 1 {
+		t.Fatalf("close calls after second Close first=%d second=%d, want 1 each", first.closeCalls, second.closeCalls)
 	}
 }
