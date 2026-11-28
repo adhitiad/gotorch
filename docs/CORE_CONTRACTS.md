@@ -61,6 +61,15 @@ A kernel declares its operation and primary compute dtype/layout. A backend's su
 
 The reference implementation will define correctness. SIMD and BLAS/LAPACK implementations are optional optimized paths and must be differentially tested against the reference implementation. A backend may not retain invocation slices or borrowed storage handles after its execution call returns.
 
+
+### Optional BLAS backend (P3)
+
+- The optional OpenBLAS adapter is available only with the `gotorch_blas` build tag on Linux/Windows and an explicit `GOTORCH_OPENBLAS_LIBRARY` path.
+- The initial native operation is contiguous rank-2 float32/float64 `matmul` through CBLAS SGEMM/DGEMM. No LAPACK routine is claimed until a matching GoTorch kernel contract exists.
+- Native execution stages storage into Go-owned typed slices, checks cancellation before/after the non-interruptible vendor call, and validates dimensions against the CBLAS integer ABI.
+- OpenBLAS thread count is process-global. The adapter serializes thread-count save/set/call/restore and computes a per-call ceiling from `ExecutionPolicy{GoWorkers, BLASThreads}`; it never mutates `GOMAXPROCS`.
+- The backend must be closed only after dispatch has stopped. The scalar reference backend remains mandatory and is always registered last.
+
 ## Execution and lifecycle
 
 Long-running operations accept `context.Context`, use bounded resources, and honor cancellation at safe boundaries. Runtime components start in dependency order and stop in reverse order. A component whose `Start` fails is responsible for cleaning up its own partial startup; the manager rolls back components that had already started. Shutdown is best-effort across all components and reports joined errors.
