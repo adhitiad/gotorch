@@ -68,7 +68,7 @@ The reference implementation will define correctness. SIMD and BLAS/LAPACK imple
 - The initial native operation is contiguous rank-2 float32/float64 `matmul` through CBLAS SGEMM/DGEMM. No LAPACK routine is claimed until a matching GoTorch kernel contract exists.
 - Native execution stages storage into Go-owned typed slices, checks cancellation before/after the non-interruptible vendor call, and validates dimensions against the CBLAS integer ABI.
 - OpenBLAS thread count is process-global. The adapter serializes thread-count save/set/call/restore and computes a per-call ceiling from `ExecutionPolicy{GoWorkers, BLASThreads}`; it never mutates `GOMAXPROCS`.
-- The backend must be closed only after dispatch has stopped. The scalar reference backend remains mandatory and is always registered last.
+- The backend must be closed only after dispatch has stopped. `compute.Registry.Close` prevents further registration/dispatch, closes registered closable backends in reverse order, waits through each backend's own close synchronization, and aggregates close errors. The scalar reference backend remains mandatory and is always registered last.
 
 ## Execution and lifecycle
 

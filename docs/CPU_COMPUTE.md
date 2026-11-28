@@ -334,3 +334,10 @@ These are starting acceptance budgets, not claims of universal numerical error b
 ### Invocation and ownership
 
 A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.
+
+
+## Registry lifecycle and SIMD cutoff benchmarks
+
+A registry that owns optional dynamically loaded backends must be closed when its runtime is shut down. Call `Registry.Close` after stopping new dispatch; it rejects subsequent registration/selection/execution, closes closable backends in reverse registration order, and returns joined cleanup errors. Repeated close calls are idempotent and return the original cleanup result.
+
+The SIMD benchmark suite includes a dedicated cutoff sweep at 16, 31, 32, 33 and 64 elements for float32/float64 add, subtract and multiply. This measures the scalar fallback immediately below `simdMinElements` and the SIMD path at/above the threshold. Keep the threshold unchanged until repeated measurements on supported target hardware justify a change; one hosted CI CPU is not enough evidence.

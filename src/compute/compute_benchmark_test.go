@@ -145,6 +145,40 @@ func BenchmarkCPUElementwise(b *testing.B) {
 	}
 }
 
+// BenchmarkCPUSIMDThreshold measures both sides of the SIMD dispatch cutoff.
+// Values below simdMinElements intentionally exercise the scalar fallback.
+func BenchmarkCPUSIMDThreshold(b *testing.B) {
+	benchmarkEnvironment(b)
+	backend := NewSIMDCPUBackend()
+	if backend == nil {
+		b.Skip("SIMD backend is unavailable; build with GOEXPERIMENT=simd on a supported CPU")
+	}
+	for _, operation := range []string{OpAdd, OpSub, OpMul} {
+		for _, dt := range []dtype.DType{dtype.Float32, dtype.Float64} {
+			for _, size := range []int64{16, 31, 32, 33, 64} {
+				b.Run(fmt.Sprintf("%s/%s/n=%d", operation, dt, size), func(b *testing.B) {
+					a := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{size}, nil), 1)
+					bb := benchmarkArgument(b, benchmarkMeta(b, dt, []int64{size}, nil), 2)
+					out := benchmarkOutput(b, dt, size)
+					spec := KernelSpec{Operation: operation, DType: dt, Layout: tensor.LayoutContiguous}
+					call := Invocation{Inputs: []Argument{a, bb}, Outputs: []Argument{out}}
+					benchmarkCheckDifferential(b, backend, spec, call.Inputs, out)
+					width, _ := dt.Size()
+					b.SetBytes(size * width * 3)
+					b.ReportAllocs()
+					b.ResetTimer()
+					for i := 0; i < b.N; i++ {
+						if err := Run(context.Background(), backend, spec, call); err != nil {
+							b.Fatal(err)
+						}
+					}
+					b.ReportMetric(float64(size)*float64(b.N)/b.Elapsed().Seconds(), "elem/s")
+				})
+			}
+		}
+	}
+}
+
 func BenchmarkCPUMatMulReference(b *testing.B) {
 	benchmarkEnvironment(b)
 	backend := NewReferenceCPUBackend()

@@ -2,6 +2,7 @@ package compute
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"reflect"
 	"strings"
@@ -15,6 +16,8 @@ type Registry struct {
 	mu       sync.RWMutex
 	backends []Backend
 	names    map[string]struct{}
+	closed   bool
+	closeErr error
 }
 
 func NewRegistry() *Registry { return &Registry{names: make(map[string]struct{})} }
@@ -29,6 +32,9 @@ func (r *Registry) Register(backend Backend) error {
 	}
 	r.mu.Lock()
 	defer r.mu.Unlock()
+	if r.closed {
+		return fmt.Errorf("%w: compute registry is closed", errs.ErrInvalidState)
+	}
 	if r.names == nil {
 		r.names = make(map[string]struct{})
 	}
@@ -52,6 +58,9 @@ func (r *Registry) Select(spec KernelSpec, call Invocation) (Backend, error) {
 	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+	if r.closed {
+		return nil, fmt.Errorf("%w: compute registry is closed", errs.ErrInvalidState)
+	}
 	for _, backend := range r.backends {
 		if backend.Supports(spec, call) {
 			return backend, nil
@@ -72,6 +81,31 @@ func (r *Registry) Execute(ctx context.Context, spec KernelSpec, call Invocation
 		return err
 	}
 	return Run(ctx, backend, spec, call)
+}
+
+// Close prevents new dispatch and closes registered backends in reverse order.
+// Backends without a Close() error method require no additional lifecycle action.
+// It waits for each backend's own Close implementation to drain in-flight work.
+func (r *Registry) Close() error {
+	if r == nil {
+		return errs.ErrInvalidArgument
+	}
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	if r.closed {
+		return r.closeErr
+	}
+	r.closed = true
+	var closeErrors []error
+	for i := len(r.backends) - 1; i >= 0; i-- {
+		if closer, ok := r.backends[i].(interface{ Close() error }); ok {
+			if err := closer.Close(); err != nil {
+				closeErrors = append(closeErrors, fmt.Errorf("close backend %q: %w", r.backends[i].Name(), err))
+			}
+		}
+	}
+	r.closeErr = errors.Join(closeErrors...)
+	return r.closeErr
 }
 
 func (r *Registry) Backends() []string {
