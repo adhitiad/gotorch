@@ -155,8 +155,8 @@ func (t *Tensor) writeAll(data []byte) error {
 	if t == nil {
 		return errs.ErrInvalidArgument
 	}
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return t.writeLogicalBytesLocked(data)
 }
 
