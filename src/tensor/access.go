@@ -40,8 +40,8 @@ func (t *Tensor) readElementBytes(indices ...int64) ([]byte, error) {
 	if t == nil {
 		return nil, errs.ErrInvalidArgument
 	}
-	t.mu.Lock()
-	defer t.mu.Unlock()
+	t.mu.RLock()
+	defer t.mu.RUnlock()
 	offset, err := t.byteOffsetLocked(indices...)
 	if err != nil {
 		return nil, err
@@ -65,8 +65,8 @@ func (t *Tensor) writeElementBytes(raw []byte, indices ...int64) error {
 	if t == nil {
 		return errs.ErrInvalidArgument
 	}
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	offset, err := t.byteOffsetLocked(indices...)
 	if err != nil {
 		return err
