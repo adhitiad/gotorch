@@ -3,16 +3,31 @@ package autograd
 import (
 	"context"
 	"fmt"
+	"reflect"
 
 	"github.com/adhitiad/gotorch/src/errs"
 	"github.com/adhitiad/gotorch/src/tensor"
 )
 
+
+func nilContext(ctx context.Context) bool {
+	if ctx == nil {
+		return true
+	}
+	value := reflect.ValueOf(ctx)
+	switch value.Kind() {
+	case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Pointer, reflect.Slice:
+		return value.IsNil()
+	default:
+		return false
+	}
+}
+
 // JVP evaluates the forward-mode directional derivative of target.
 // seeds maps leaf/intermediate Variables to tangent tensors; unseeded values
 // contribute zero tangents. The returned Tensor is independently owned.
 func (t *Tape) JVP(ctx context.Context, target *Variable, seeds map[*Variable]*tensor.Tensor) (*tensor.Tensor, error) {
-	if t == nil || ctx == nil || target == nil {
+	if t == nil || nilContext(ctx) || target == nil {
 		return nil, errs.ErrInvalidArgument
 	}
 	t.mu.Lock()
