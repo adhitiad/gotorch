@@ -9,7 +9,6 @@ import (
 	"github.com/adhitiad/gotorch/src/tensor"
 )
 
-
 func nilContext(ctx context.Context) bool {
 	if ctx == nil {
 		return true
