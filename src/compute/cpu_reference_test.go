@@ -173,3 +173,77 @@ func TestReferenceRejectsUnsupportedDType(t *testing.T) {
 		t.Fatal("int32 unexpectedly supported")
 	}
 }
+
+
+type closableTestBackend struct {
+	testBackend
+	name       string
+	closeCalls int
+	closeErr   error
+}
+
+func (b *closableTestBackend) Name() string {
+	if b.name != "" {
+		return b.name
+	}
+	return b.testBackend.Name()
+}
+
+func (b *closableTestBackend) Close() error {
+	b.closeCalls++
+	return b.closeErr
+}
+
+func TestRegistryCloseOwnsBackendLifecycle(t *testing.T) {
+	registry := NewRegistry()
+	backend := &closableTestBackend{}
+	if err := registry.Register(backend); err != nil {
+		t.Fatal(err)
+	}
+	if err := registry.Close(); err != nil {
+		t.Fatal(err)
+	}
+	if backend.closeCalls != 1 {
+		t.Fatalf("close calls=%d, want 1", backend.closeCalls)
+	}
+	if err := registry.Close(); err != nil {
+		t.Fatalf("second close: %v", err)
+	}
+	if backend.closeCalls != 1 {
+		t.Fatalf("close calls after repeated Close=%d, want 1", backend.closeCalls)
+	}
+	if err := registry.Register(NewReferenceCPUBackend()); !errors.Is(err, errs.ErrInvalidState) {
+		t.Fatalf("register after close: %v", err)
+	}
+	input := floatArg(t, []float64{1}, 1)
+	output := outputArg(t, 1)
+	spec := KernelSpec{Operation: OpNeg, DType: dtype.Float64, Layout: tensor.LayoutContiguous}
+	call := Invocation{Inputs: []Argument{input}, Outputs: []Argument{output}}
+	if _, err := registry.Select(spec, call); !errors.Is(err, errs.ErrInvalidState) {
+		t.Fatalf("select after close: %v", err)
+	}
+	if err := registry.Execute(context.Background(), spec, call); !errors.Is(err, errs.ErrInvalidState) {
+		t.Fatalf("execute after close: %v", err)
+	}
+}
+
+func TestRegistryCloseAggregatesBackendErrors(t *testing.T) {
+	firstErr := errors.New("first close failure")
+	secondErr := errors.New("second close failure")
+	registry := NewRegistry()
+	first := &closableTestBackend{name: "first", closeErr: firstErr}
+	second := &closableTestBackend{name: "second", closeErr: secondErr}
+	if err := registry.Register(first); err != nil {
+		t.Fatal(err)
+	}
+	if err := registry.Register(second); err != nil {
+		t.Fatal(err)
+	}
+	err := registry.Close()
+	if !errors.Is(err, firstErr) || !errors.Is(err, secondErr) {
+		t.Fatalf("close error=%v, want both backend failures", err)
+	}
+	if first.closeCalls != 1 || second.closeCalls != 1 {
+		t.Fatalf("close calls first=%d second=%d, want 1 each", first.closeCalls, second.closeCalls)
+	}
+}
