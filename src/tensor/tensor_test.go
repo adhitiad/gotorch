@@ -192,7 +192,6 @@ func TestClosedTensorRejectsDataAccess(t *testing.T) {
 	}
 }
 
-
 // unlockedTestAllocator intentionally supplies storage without internal locking.
 // Tensor's own handle must serialize overlapping writes made through that handle.
 type unlockedTestAllocator struct{}
