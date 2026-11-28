@@ -72,13 +72,12 @@ P0–P3 provide a substantial, coherent Go-native foundation, but the audit foun
 - SIMD and BLAS benchmark ratios are host-specific and include staging/storage overhead; they are not isolated ISA speedup claims.
 - LAPACK, broadcasting, batched matmul, low-precision/complex compute and additional kernels remain unsupported.
 
-## Verification required for this audit branch
+## Verification evidence
 
-The code changes must pass:
-- `gofmt` and `go test ./...`
-- `go test -race ./...` on Linux AMD64 and Linux ARM64
-- `go vet ./...`
-- normal, SIMD-experiment and tagged OpenBLAS CI paths on Windows AMD64, Linux AMD64 and Linux ARM64 as configured
-- documentation validation
+The audit PR head `dbb660d09184f9cca2791defc687cee92e7c3e95` passed the required checks before merge:
 
-Do not mark the fixes verified until the current audit commit's workflow runs complete successfully. Historical runs validate their respective historical commits only.
+- [Go CI run 46105235925](https://github.com/adhitiad/gotorch/actions/runs/46105235925) — all 7 jobs passed: Windows AMD64, Linux AMD64 and Linux ARM64 normal tests/vet/race checks, SIMD experiment on all three targets, and real OpenBLAS benchmark on Linux AMD64.
+- [Documentation validation 46105235967](https://github.com/adhitiad/gotorch/actions/runs/46105235967) — passed.
+- [PR #29](https://github.com/adhitiad/gotorch/pull/29) merged into `adhitiad_gpt` as `e16024f4a5c95026abfa3de962cbfec965dae356`.
+
+The post-merge Go CI run on the merge commit was still running at the time this audit record was synchronized. The exact PR head had already passed the full matrix; the post-merge run is an additional confirmation, not a substitute for the PR-head evidence.
