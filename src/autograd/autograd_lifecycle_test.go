@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"testing"
+	"time"
 
 	"github.com/adhitiad/gotorch/src/errs"
 	"github.com/adhitiad/gotorch/src/tensor"
@@ -142,4 +143,33 @@ func tensorMustFloat32(t *testing.T, values []float32, dimensions ...int64) *ten
 		t.Fatal(err)
 	}
 	return value
+}
+
+type typedNilContext struct{}
+
+func (*typedNilContext) Deadline() (time.Time, bool) { return time.Time{}, false }
+func (*typedNilContext) Done() <-chan struct{}       { return nil }
+func (*typedNilContext) Err() error                  { return nil }
+func (*typedNilContext) Value(any) any               { return nil }
+
+func TestJVPRejectsTypedNilContext(t *testing.T) {
+	tape := NewTape()
+	defer tape.Close()
+	input, err := tensor.From([]float32{1}, 1)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer input.Close()
+	x, err := tape.NewVariable(input, true)
+	if err != nil {
+		t.Fatal(err)
+	}
+	var typedNil *typedNilContext
+	var ctx context.Context = typedNil
+	if _, err := tape.JVP(ctx, x, nil); !errors.Is(err, errs.ErrInvalidArgument) {
+		t.Fatalf("JVP typed-nil context error = %v, want ErrInvalidArgument", err)
+	}
+	if err := tape.Backward(ctx, x); !errors.Is(err, errs.ErrInvalidArgument) {
+		t.Fatalf("Backward typed-nil context error = %v, want ErrInvalidArgument", err)
+	}
 }

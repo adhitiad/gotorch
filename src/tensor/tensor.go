@@ -22,6 +22,8 @@ func (*noCopy) Unlock() {}
 //
 // A Tensor must not be copied after first use. Use Retain to obtain another
 // independently closable handle. Close is safe to call more than once.
+// Mutations through one handle are serialized. Callers must synchronize
+// overlapping writes through distinct retained handles or views.
 // The zero value owns no memory: methods other than Close return ErrInvalidState.
 type Tensor struct {
 	noCopy   noCopy
@@ -155,8 +157,8 @@ func (t *Tensor) writeAll(data []byte) error {
 	if t == nil {
 		return errs.ErrInvalidArgument
 	}
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	return t.writeLogicalBytesLocked(data)
 }
 

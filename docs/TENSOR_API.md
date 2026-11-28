@@ -111,3 +111,8 @@ The format is versioned but remains a pre-1.0 GoTorch format; applications shoul
 ## Concurrency and lifetime
 
 Tensor methods synchronize access to each handle's lifecycle. The Pure Go heap storage synchronizes byte access and protects shared allocation lifetime. Concurrent readers are safe. Callers must coordinate conflicting mutations across aliases; the API does not promise an atomic snapshot across a multi-element strided read or write. Views retain storage until their own final `Close`.
+
+
+## Concurrent access
+
+Operations that mutate one `Tensor` handle are serialized by that handle. Concurrent reads may proceed together. If multiple retained handles or views alias the same allocation, callers must synchronize overlapping writes across those handles; each handle has its own lock, and storage implementations are only required to support concurrent reads and caller-coordinated disjoint writes.

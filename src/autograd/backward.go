@@ -20,7 +20,7 @@ func (t *Tape) Backward(ctx context.Context, target *Variable) error {
 // BackwardWithGradient is Backward with an explicit upstream seed. seed must
 // have the same shape and dtype as target. A nil seed is equivalent to ones.
 func (t *Tape) BackwardWithGradient(ctx context.Context, target *Variable, seed *tensor.Tensor) error {
-	if t == nil || ctx == nil || target == nil {
+	if t == nil || nilContext(ctx) || target == nil {
 		return errs.ErrInvalidArgument
 	}
 	t.mu.Lock()
