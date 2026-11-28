@@ -40,8 +40,8 @@ func (t *Tensor) readElementBytes(indices ...int64) ([]byte, error) {
 	if t == nil {
 		return nil, errs.ErrInvalidArgument
 	}
-	t.mu.RLock()
-	defer t.mu.RUnlock()
+	t.mu.Lock()
+	defer t.mu.Unlock()
 	offset, err := t.byteOffsetLocked(indices...)
 	if err != nil {
 		return nil, err
