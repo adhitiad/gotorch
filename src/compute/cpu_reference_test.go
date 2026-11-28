@@ -174,7 +174,6 @@ func TestReferenceRejectsUnsupportedDType(t *testing.T) {
 	}
 }
 
-
 type closableTestBackend struct {
 	testBackend
 	name       string
