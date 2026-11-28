@@ -8,10 +8,9 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/adhitiad/gotorch/src/storage"
-
 	"github.com/adhitiad/gotorch/src/dtype"
 	"github.com/adhitiad/gotorch/src/errs"
+	"github.com/adhitiad/gotorch/src/storage"
 )
 
 func TestTensorZeroValueAndClose(t *testing.T) {
