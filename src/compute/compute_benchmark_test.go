@@ -145,8 +145,7 @@ func BenchmarkCPUElementwise(b *testing.B) {
 	}
 }
 
-
- // BenchmarkCPUSIMDThreshold measures both sides of the SIMD dispatch cutoff.
+// BenchmarkCPUSIMDThreshold measures both sides of the SIMD dispatch cutoff.
  // Values below simdMinElements intentionally exercise the scalar fallback.
 func BenchmarkCPUSIMDThreshold(b *testing.B) {
 	benchmarkEnvironment(b)
