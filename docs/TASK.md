@@ -6,8 +6,8 @@
 - **Repository:** `github.com/adhitiad/gotorch`
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
-- **Current phase:** P3 — CPU Compute
-- **Current status:** P0–P3 implementation is present. The 2026-11-28 integrity audit fixed P1 write-locking and P2 typed-nil-context gaps. The audit PR passed its complete Go CI matrix and documentation validation before merge; see [P0–P3 Engineering Audit](P0_P3_AUDIT.md) for findings and verification evidence. See [Autograd API](AUTOGRAD_API.md), [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
+- **Current phase:** P4 — Scheduler & Memory Engine
+- **Current status:** P0–P4 implementation is present. The 2026-11-28 integrity audit fixed P1 write-locking and P2 typed-nil-context gaps. P4 adds `src/scheduler` and `src/memory` with bounded parallel execution, explicit buffer ownership, and deterministic accounting. The audit PR passed its complete Go CI matrix and documentation validation before merge; see [P0–P3 Engineering Audit](P0_P3_AUDIT.md) for findings and verification evidence. See [Autograd API](AUTOGRAD_API.md), [P1 API Review](P1_API_REVIEW.md), [Tensor API](TENSOR_API.md) and [Memory Model](MEMORY_MODEL.md).
 
 ---
 ## 1. Project definition
@@ -238,7 +238,7 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 - [x] `P03-010` Benchmark representative shapes, layouts, dtypes and thread counts with `-benchmem`.
 - [x] `P03-011` Verify safe dispatch on Windows AMD64, Linux AMD64 and Linux ARM64.
 
-**Current implementation slice:** P03-001 through P03-010 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise/reduction/matmul kernels, numerical tolerances, runtime CPU feature snapshots, architecture-isolated SIMD, optional OpenBLAS CBLAS GEMM, BLAS thread coordination and differential tests. `NewDefaultCPURegistry` registers an explicitly configured OpenBLAS backend first, an available SIMD backend second, and the mandatory scalar reference backend last. The owning `Registry` exposes `Close()` to stop dispatch and release closable optional backends. OpenBLAS is opt-in at build time (`-tags=gotorch_blas`) and runtime (`GOTORCH_OPENBLAS_LIBRARY` must contain the exact library path); builds without the tag or environment setting stay on the existing portable paths. The adapter supports contiguous rank-2 float32/float64 matmul through SGEMM/DGEMM. `ExecutionPolicy` bounds BLAS threads by GoTorch worker concurrency and the available `GOMAXPROCS` budget, while serializing process-global thread-count changes. SIMD remains separately opt-in with `GOEXPERIMENT=simd`; AMD64 requires AVX2 and ARM64 requires ASIMD. Differential tests compare every enabled optimized kernel (SIMD add/sub/mul and BLAS matmul) against the Pure Go reference using `DefaultTolerance`. The reference path continues to support strided inputs and contiguous outputs. Broadcasting, batched matmul, LAPACK solve/decomposition operations and low-precision/complex arithmetic remain unsupported.
+**Current implementation slice:** P03-001 through P03-011 are implemented in `src/compute`: deterministic backend registry, Pure Go scalar elementwise/reduction/matmul kernels, numerical tolerances, runtime CPU feature snapshots, architecture-isolated SIMD, optional OpenBLAS CBLAS GEMM, BLAS thread coordination and differential tests. `NewDefaultCPURegistry` registers an explicitly configured OpenBLAS backend first, an available SIMD backend second, and the mandatory scalar reference backend last. The owning `Registry` exposes `Close()` to stop dispatch and release closable optional backends. OpenBLAS is opt-in at build time (`-tags=gotorch_blas`) and runtime (`GOTORCH_OPENBLAS_LIBRARY` must contain the exact library path); builds without the tag or environment setting stay on the existing portable paths. The adapter supports contiguous rank-2 float32/float64 matmul through SGEMM/DGEMM. `ExecutionPolicy` bounds BLAS threads by GoTorch worker concurrency and the available `GOMAXPROCS` budget, while serializing process-global thread-count changes. SIMD remains separately opt-in with `GOEXPERIMENT=simd`; AMD64 requires AVX2 and ARM64 requires ASIMD. Differential tests compare every enabled optimized kernel (SIMD add/sub/mul and BLAS matmul) against the Pure Go reference using `DefaultTolerance`. The reference path continues to support strided inputs and contiguous outputs. Broadcasting, batched matmul, LAPACK solve/decomposition operations and low-precision/complex arithmetic remain unsupported.
 
 **Verification:** [PR #24 Go CI](https://github.com/adhitiad/gotorch/actions/runs/45950930656) passed gofmt, package listing, normal tests, vet, tagged `gotorch_blas` tests, tagged vet and `CGO_ENABLED=0` tagged tests on Windows AMD64, Linux AMD64 and Linux ARM64. The same run passed SIMD experiment tests/vet on all three targets and Linux race tests plus benchmark smoke. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45950930676) passed. Differential coverage includes float32/float64 SIMD add/sub/mul and float32/float64 OpenBLAS matmul against the Pure Go reference. The OpenBLAS ABI tests use a deterministic mock; loading and exercising a real vendor library remains dependent on an installed OpenBLAS build. P03-010 benchmarks now cover scalar/SIMD elementwise kernels, Pure Go matmul and real OpenBLAS GEMM with allocation and thread-policy measurements. [PR #25 benchmark CI](https://github.com/adhitiad/gotorch/actions/runs/45959364341) passed all seven jobs: normal and SIMD verification on Windows AMD64, Linux AMD64 and Linux ARM64, plus real OpenBLAS performance benchmarks on Linux AMD64. [Documentation validation](https://github.com/adhitiad/gotorch/actions/runs/45959364472) passed. Repeated `-benchmem` runs use three 100 ms samples per case on Linux AMD64; benchmark output and sample interpretation are recorded in `docs/CPU_COMPUTE.md`. The real OpenBLAS suite installs and loads the shared library, and tests float32/float64 GEMM at 32, 128 and 256 with Go worker/thread counts 1, 2 and 4. The SIMD CI benchmark also sweeps 16, 31, 32, 33 and 64 elements for add/sub/mul to measure both sides of the 32-element dispatch threshold. P03-011 safe dispatch is verified by the native Windows AMD64, Linux AMD64 and Linux ARM64 matrix, including scalar fallback where SIMD is unavailable. The P3 lifecycle and cutoff follow-up is tracked in the P0–P3 audit review. These are CI-host samples, not portable performance guarantees. GPU and distributed acceleration are not prerequisites for P3.
 
@@ -249,17 +249,21 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Deliverables:** bounded worker pool, chunk scheduler, task cancellation, allocator reuse, workspace/arena facilities, memory accounting and backpressure.
 
-- [ ] `P04-001` Define scheduler ownership, task model, queue limits and shutdown lifecycle.
-- [ ] `P04-002` Implement bounded worker pool and chunked parallel-for primitives.
-- [ ] `P04-003` Implement cancellation, panic containment policy and task error aggregation.
-- [ ] `P04-004` Implement allocation reuse/pool with explicit ownership rules.
-- [ ] `P04-005` Implement workspace and arena lifetime/reset validation.
-- [ ] `P04-006` Add memory statistics: active, allocated, cached and peak bytes.
-- [ ] `P04-007` Define nested-parallelism policy across Go workers and BLAS.
-- [ ] `P04-008` Add race, leak, shutdown, cancellation and stress tests.
-- [ ] `P04-009` Benchmark scheduler overhead and scaling efficiency.
+- [x] `P04-001` Define scheduler ownership, task model, queue limits and shutdown lifecycle.
+- [x] `P04-002` Implement bounded worker pool and chunked parallel-for primitives.
+- [x] `P04-003` Implement cancellation, panic containment policy and task error aggregation.
+- [x] `P04-004` Implement allocation reuse/pool with explicit ownership rules.
+- [x] `P04-005` Implement workspace and arena lifetime/reset validation.
+- [x] `P04-006` Add memory statistics: active, allocated, cached and peak bytes.
+- [x] `P04-007` Define nested-parallelism policy across Go workers and BLAS.
+- [x] `P04-008` Add race, leak, shutdown, cancellation and stress tests.
+- [x] `P04-009` Benchmark scheduler overhead and scaling efficiency.
 
 **Exit gates:** queue and goroutine counts are bounded; cancellation and shutdown are reliable; no reuse before last reference; no race/deadlock/leak regression; memory accounting is meaningful.
+
+**Current implementation slice:** `src/scheduler` provides a fixed-size worker pool, bounded queue, `Submit`/`TrySubmit`/`SubmitWait`, `Future`, `ParallelFor`, cancellation propagation, panic containment, joined chunk errors, operational statistics and idempotent `Close`. Nested submissions and `ParallelFor` calls made with a worker context run inline to prevent pool starvation and deadlock. `scheduler.Policy` uses the same `min(BLASThreads, max(1, GOMAXPROCS/GoWorkers))` formula as `compute.ExecutionPolicy`; `docs/CPU_COMPUTE.md` records the shared budget. `src/memory` provides `Pool` as a deterministic `storage.Allocator`, fixed-capacity `Arena`, named `Workspace`, refcounted handles, zeroing before reuse, byte limits, and active/allocated/cached/peak statistics. Arena reset and close reject live handles; a failed workspace close leaves the workspace open for retry.
+
+**Verification:** local runs of `gofmt -l .`, `go test ./... -count=1`, `go vet ./...`, `go test -tags=gotorch_blas ./... -count=1`, `go vet -tags=gotorch_blas ./...`, scheduler/memory benchmark smoke with `-benchmem`, and `CGO_ENABLED=0` cross-builds for Windows AMD64, Linux AMD64 and Linux ARM64 all passed. Race and leak tests are present in `src/scheduler` and `src/memory`; the Windows host has no C compiler, so `go test -race` could not run locally. Linux race execution remains the native CI source of truth for the no-race/no-leak gate.
 
 ### P5 — Neural Networks, Transformers & PEFT
 

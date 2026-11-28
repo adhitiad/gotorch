@@ -59,7 +59,7 @@ The adapter requires the CBLAS GEMM symbols and OpenBLAS thread getter/setter sy
 
 ### BLAS thread coordination
 
-`ExecutionPolicy` specifies the maximum concurrent GoTorch workers and configured BLAS thread ceiling. The effective BLAS count is `min(BLASThreads, max(1, GOMAXPROCS/GoWorkers))`. The backend serializes each process-global OpenBLAS set/call/restore transaction, preserving the prior thread count and avoiding races between GoTorch callers. This is intentionally conservative until P04 provides a central scheduler/BLAS lease. It does not modify `GOMAXPROCS`. Callers must stop dispatching before closing the backend.
+`ExecutionPolicy` specifies the maximum concurrent GoTorch workers and configured BLAS thread ceiling. The effective BLAS count is `min(BLASThreads, max(1, GOMAXPROCS/GoWorkers))`. The backend serializes each process-global OpenBLAS set/call/restore transaction, preserving the prior thread count and avoiding races between GoTorch callers. `scheduler.Scheduler.Policy` reports the same budget from the owning worker pool, so the scheduler and adapter cannot independently raise the shared CPU limit. It does not modify `GOMAXPROCS`. Callers must stop dispatching before closing the backend.
 
 CI compiles and tests the tagged adapter on Windows AMD64, Linux AMD64 and Linux ARM64 without requiring a native OpenBLAS installation; mock CBLAS functions exercise numerical parity and thread-budget behavior. The tagged build is also tested with `CGO_ENABLED=0` so the optional adapter does not introduce a CGo requirement. A real OpenBLAS library integration test remains environment-dependent.
 
@@ -69,7 +69,7 @@ Dispatch considers CPU capabilities, dtype, layout, shape, alignment, and worklo
 
 ## Parallelism
 
-Use a bounded scheduler and chunked work. Coordinate intra-op parallelism with request-level concurrency and external BLAS thread pools. Never spawn one goroutine per element. Do not modify global `GOMAXPROCS` automatically.
+Use `scheduler.Scheduler` with a fixed worker count and bounded queue, and express element-parallel work through `ParallelFor`. Chunks submitted from inside a worker run inline, which prevents nested parallel calls from consuming the whole pool or deadlocking on a full queue. Coordinate intra-op parallelism with request-level concurrency and external BLAS thread pools through `scheduler.Policy`. Never spawn one goroutine per element. Do not modify global `GOMAXPROCS` automatically.
 
 ## Portability
 
@@ -95,173 +95,13 @@ Representative commands:
 
 ```sh
 # Scalar baseline, elementwise and matmul, allocation-aware.
-go test -run='^
-
-The first Pure Go reference backend is registered as `compute.ReferenceCPUBackend` and selected through `compute.Registry`. Registration order is the deterministic dispatch precedence: optimized backends are registered before the scalar fallback.
-
-The initial reference operation set is:
-
-- Elementwise binary: `add`, `sub`, `mul`, `div` (identical shapes).
-- Elementwise unary: `neg`, `exp`, `log`, `relu`.
-- Full reductions: `sum`, `mean`.
-- Rank-2 matrix multiplication: `matmul`.
-
-The reference path supports float32 and float64. Inputs may use non-negative strided layouts; outputs must be contiguous. Integer, complex, float16 and bfloat16 arithmetic, broadcasting, batched matrix multiplication and partial-axis reductions are not implemented in this slice.
-
-### Numerical and cancellation policy
-
-- Element traversal and reductions use deterministic logical row-major order.
-- Float32 inputs are decoded exactly to float64 for scalar calculation and rounded once when stored as float32. Float64 operations retain float64 precision.
-- Reductions and matrix products accumulate in float64 for both supported dtypes, then cast once to the output dtype. This is an explicit first-version accuracy policy, not a promise of bitwise parity with vendor BLAS.
-- Division follows IEEE-754 behavior: zero divisors may produce infinities or NaNs. Logarithms of zero/negative inputs follow Go's `math.Log` behavior. ReLU propagates NaN.
-- Cancellation is checked during long elementwise loops, reductions and matrix products. A cancelled operation may have partially written its caller-provided output; callers must discard or overwrite that output after an error.
-- Different optimized implementations may use different reduction order. They must declare their numerical behavior and pass operation-specific differential tolerances before dispatch is enabled.
-
-### Numerical acceptance policy
-
-The reference backend is deterministic for a fixed input, dtype, operation and build: logical row-major traversal, serial reductions, and float64 intermediate accumulation for both supported dtypes. This does not promise bitwise parity with a parallel reduction or vendor BLAS.
-
-`compute.DefaultTolerance` defines initial differential-test budgets. The comparison is `abs(got-want) <= Abs + Rel*max(abs(got), abs(want))`; NaN matches only NaN, and infinities match only an infinity with the same sign.
-
-| Operation group | float32 (Abs, Rel) | float64 (Abs, Rel) |
-|---|---:|---:|
-| add/sub/mul/div/neg/relu | 1e-6, 1e-5 | 1e-12, 1e-10 |
-| exp/log | 2e-6, 2e-5 | 2e-12, 2e-10 |
-| sum/mean | 2e-5, 2e-5 | 2e-11, 2e-10 |
-| matmul | 5e-5, 5e-5 | 1e-10, 1e-9 |
-
-These are starting acceptance budgets, not claims of universal numerical error bounds. Tests must include cancellation-prone values, mixed magnitudes, subnormals where supported, signed zero, NaN and infinities. Tighten or revise a budget only with reference evidence and documented rationale.
-
-### Invocation and ownership
-
-A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.
- -bench='BenchmarkCPU(Elementwise|MatMulReference)
-
-The first Pure Go reference backend is registered as `compute.ReferenceCPUBackend` and selected through `compute.Registry`. Registration order is the deterministic dispatch precedence: optimized backends are registered before the scalar fallback.
-
-The initial reference operation set is:
-
-- Elementwise binary: `add`, `sub`, `mul`, `div` (identical shapes).
-- Elementwise unary: `neg`, `exp`, `log`, `relu`.
-- Full reductions: `sum`, `mean`.
-- Rank-2 matrix multiplication: `matmul`.
-
-The reference path supports float32 and float64. Inputs may use non-negative strided layouts; outputs must be contiguous. Integer, complex, float16 and bfloat16 arithmetic, broadcasting, batched matrix multiplication and partial-axis reductions are not implemented in this slice.
-
-### Numerical and cancellation policy
-
-- Element traversal and reductions use deterministic logical row-major order.
-- Float32 inputs are decoded exactly to float64 for scalar calculation and rounded once when stored as float32. Float64 operations retain float64 precision.
-- Reductions and matrix products accumulate in float64 for both supported dtypes, then cast once to the output dtype. This is an explicit first-version accuracy policy, not a promise of bitwise parity with vendor BLAS.
-- Division follows IEEE-754 behavior: zero divisors may produce infinities or NaNs. Logarithms of zero/negative inputs follow Go's `math.Log` behavior. ReLU propagates NaN.
-- Cancellation is checked during long elementwise loops, reductions and matrix products. A cancelled operation may have partially written its caller-provided output; callers must discard or overwrite that output after an error.
-- Different optimized implementations may use different reduction order. They must declare their numerical behavior and pass operation-specific differential tolerances before dispatch is enabled.
-
-### Numerical acceptance policy
-
-The reference backend is deterministic for a fixed input, dtype, operation and build: logical row-major traversal, serial reductions, and float64 intermediate accumulation for both supported dtypes. This does not promise bitwise parity with a parallel reduction or vendor BLAS.
-
-`compute.DefaultTolerance` defines initial differential-test budgets. The comparison is `abs(got-want) <= Abs + Rel*max(abs(got), abs(want))`; NaN matches only NaN, and infinities match only an infinity with the same sign.
-
-| Operation group | float32 (Abs, Rel) | float64 (Abs, Rel) |
-|---|---:|---:|
-| add/sub/mul/div/neg/relu | 1e-6, 1e-5 | 1e-12, 1e-10 |
-| exp/log | 2e-6, 2e-5 | 2e-12, 2e-10 |
-| sum/mean | 2e-5, 2e-5 | 2e-11, 2e-10 |
-| matmul | 5e-5, 5e-5 | 1e-10, 1e-9 |
-
-These are starting acceptance budgets, not claims of universal numerical error bounds. Tests must include cancellation-prone values, mixed magnitudes, subnormals where supported, signed zero, NaN and infinities. Tighten or revise a budget only with reference evidence and documented rationale.
-
-### Invocation and ownership
-
-A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.
- -benchmem -count=5 -v ./src/compute
+go test -run='^$' -bench='BenchmarkCPU(Elementwise|MatMulReference)' -benchmem -count=5 ./src/compute
 
 # Architecture SIMD path; only kernels supported by this build/CPU are included.
-GOEXPERIMENT=simd go test -run='^
-
-The first Pure Go reference backend is registered as `compute.ReferenceCPUBackend` and selected through `compute.Registry`. Registration order is the deterministic dispatch precedence: optimized backends are registered before the scalar fallback.
-
-The initial reference operation set is:
-
-- Elementwise binary: `add`, `sub`, `mul`, `div` (identical shapes).
-- Elementwise unary: `neg`, `exp`, `log`, `relu`.
-- Full reductions: `sum`, `mean`.
-- Rank-2 matrix multiplication: `matmul`.
-
-The reference path supports float32 and float64. Inputs may use non-negative strided layouts; outputs must be contiguous. Integer, complex, float16 and bfloat16 arithmetic, broadcasting, batched matrix multiplication and partial-axis reductions are not implemented in this slice.
-
-### Numerical and cancellation policy
-
-- Element traversal and reductions use deterministic logical row-major order.
-- Float32 inputs are decoded exactly to float64 for scalar calculation and rounded once when stored as float32. Float64 operations retain float64 precision.
-- Reductions and matrix products accumulate in float64 for both supported dtypes, then cast once to the output dtype. This is an explicit first-version accuracy policy, not a promise of bitwise parity with vendor BLAS.
-- Division follows IEEE-754 behavior: zero divisors may produce infinities or NaNs. Logarithms of zero/negative inputs follow Go's `math.Log` behavior. ReLU propagates NaN.
-- Cancellation is checked during long elementwise loops, reductions and matrix products. A cancelled operation may have partially written its caller-provided output; callers must discard or overwrite that output after an error.
-- Different optimized implementations may use different reduction order. They must declare their numerical behavior and pass operation-specific differential tolerances before dispatch is enabled.
-
-### Numerical acceptance policy
-
-The reference backend is deterministic for a fixed input, dtype, operation and build: logical row-major traversal, serial reductions, and float64 intermediate accumulation for both supported dtypes. This does not promise bitwise parity with a parallel reduction or vendor BLAS.
-
-`compute.DefaultTolerance` defines initial differential-test budgets. The comparison is `abs(got-want) <= Abs + Rel*max(abs(got), abs(want))`; NaN matches only NaN, and infinities match only an infinity with the same sign.
-
-| Operation group | float32 (Abs, Rel) | float64 (Abs, Rel) |
-|---|---:|---:|
-| add/sub/mul/div/neg/relu | 1e-6, 1e-5 | 1e-12, 1e-10 |
-| exp/log | 2e-6, 2e-5 | 2e-12, 2e-10 |
-| sum/mean | 2e-5, 2e-5 | 2e-11, 2e-10 |
-| matmul | 5e-5, 5e-5 | 1e-10, 1e-9 |
-
-These are starting acceptance budgets, not claims of universal numerical error bounds. Tests must include cancellation-prone values, mixed magnitudes, subnormals where supported, signed zero, NaN and infinities. Tighten or revise a budget only with reference evidence and documented rationale.
-
-### Invocation and ownership
-
-A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.
- -bench='BenchmarkCPUElementwise' -benchmem -count=5 ./src/compute
+GOEXPERIMENT=simd go test -run='^$' -bench='BenchmarkCPUElementwise' -benchmem -count=5 ./src/compute
 
 # Real OpenBLAS; requires a shared library with CBLAS GEMM and OpenBLAS thread symbols.
-GOTORCH_OPENBLAS_LIBRARY=/absolute/path/to/libopenblas.so go test -tags=gotorch_blas -run='^
-
-The first Pure Go reference backend is registered as `compute.ReferenceCPUBackend` and selected through `compute.Registry`. Registration order is the deterministic dispatch precedence: optimized backends are registered before the scalar fallback.
-
-The initial reference operation set is:
-
-- Elementwise binary: `add`, `sub`, `mul`, `div` (identical shapes).
-- Elementwise unary: `neg`, `exp`, `log`, `relu`.
-- Full reductions: `sum`, `mean`.
-- Rank-2 matrix multiplication: `matmul`.
-
-The reference path supports float32 and float64. Inputs may use non-negative strided layouts; outputs must be contiguous. Integer, complex, float16 and bfloat16 arithmetic, broadcasting, batched matrix multiplication and partial-axis reductions are not implemented in this slice.
-
-### Numerical and cancellation policy
-
-- Element traversal and reductions use deterministic logical row-major order.
-- Float32 inputs are decoded exactly to float64 for scalar calculation and rounded once when stored as float32. Float64 operations retain float64 precision.
-- Reductions and matrix products accumulate in float64 for both supported dtypes, then cast once to the output dtype. This is an explicit first-version accuracy policy, not a promise of bitwise parity with vendor BLAS.
-- Division follows IEEE-754 behavior: zero divisors may produce infinities or NaNs. Logarithms of zero/negative inputs follow Go's `math.Log` behavior. ReLU propagates NaN.
-- Cancellation is checked during long elementwise loops, reductions and matrix products. A cancelled operation may have partially written its caller-provided output; callers must discard or overwrite that output after an error.
-- Different optimized implementations may use different reduction order. They must declare their numerical behavior and pass operation-specific differential tolerances before dispatch is enabled.
-
-### Numerical acceptance policy
-
-The reference backend is deterministic for a fixed input, dtype, operation and build: logical row-major traversal, serial reductions, and float64 intermediate accumulation for both supported dtypes. This does not promise bitwise parity with a parallel reduction or vendor BLAS.
-
-`compute.DefaultTolerance` defines initial differential-test budgets. The comparison is `abs(got-want) <= Abs + Rel*max(abs(got), abs(want))`; NaN matches only NaN, and infinities match only an infinity with the same sign.
-
-| Operation group | float32 (Abs, Rel) | float64 (Abs, Rel) |
-|---|---:|---:|
-| add/sub/mul/div/neg/relu | 1e-6, 1e-5 | 1e-12, 1e-10 |
-| exp/log | 2e-6, 2e-5 | 2e-12, 2e-10 |
-| sum/mean | 2e-5, 2e-5 | 2e-11, 2e-10 |
-| matmul | 5e-5, 5e-5 | 1e-10, 1e-9 |
-
-These are starting acceptance budgets, not claims of universal numerical error bounds. Tests must include cancellation-prone values, mixed magnitudes, subnormals where supported, signed zero, NaN and infinities. Tighten or revise a budget only with reference evidence and documented rationale.
-
-### Invocation and ownership
-
-A `compute.Invocation` borrows its storage handles for the duration of `Execute`. Backends must not retain the invocation slices or handles. The caller allocates outputs, guarantees they do not overlap writable inputs or one another, and keeps all storage handles alive until execution returns. The reference backend writes only contiguous output metadata and never allocates or retains storage.
- -bench='BenchmarkCPUOpenBLASMatMul' -benchmem -count=5 ./src/compute
+GOTORCH_OPENBLAS_LIBRARY=/absolute/path/to/libopenblas.so go test -tags=gotorch_blas -run='^$' -bench='BenchmarkCPUOpenBLASMatMul' -benchmem -count=5 ./src/compute
 
 # Compare repeated runs statistically.
 # Save outputs separately and use benchstat when it is installed.

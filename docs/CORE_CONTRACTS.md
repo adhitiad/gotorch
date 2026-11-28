@@ -74,6 +74,16 @@ The reference implementation will define correctness. SIMD and BLAS/LAPACK imple
 
 Long-running operations accept `context.Context`, use bounded resources, and honor cancellation at safe boundaries. Runtime components start in dependency order and stop in reverse order. A component whose `Start` fails is responsible for cleaning up its own partial startup; the manager rolls back components that had already started. Shutdown is best-effort across all components and reports joined errors.
 
+### Scheduler (P4)
+
+- `scheduler.Scheduler` owns a fixed number of workers and a bounded queue. `Config.Validate` rejects zero workers and queue or chunk sizes above the published limits; construction never creates unbounded goroutines or buffers.
+- `Submit` waits for queue space while honoring the caller's context; `TrySubmit` never waits and returns `ErrQueueFull` when the queue is full. `Future.Wait` returns the task result or the caller's cancellation error.
+- Every task receives a context derived from both its caller and the scheduler. Cancellation of either propagates to the task at safe boundaries; tasks must honor that context.
+- A panicking task is contained as `*PanicError` with the panic value and stack, counted as a failure, and cannot terminate a worker. `OnError`, when configured, observes task errors and is itself protected against panics.
+- `ParallelFor` splits work into bounded chunks and joins chunk errors. A call made with a worker context runs chunks inline so nested parallelism cannot consume the pool or deadlock on a full queue.
+- `Close` stops admission, cancels in-flight work, waits for submissions and workers to drain, and is idempotent. A bounded `Close` context can time out while a non-cooperative task is still running; the shutdown continues in the background.
+- `scheduler.Policy` mirrors `compute.ExecutionPolicy`, so the worker pool and optional BLAS adapter derive their CPU budget from the same formula and never modify `GOMAXPROCS`.
+
 ## Memory
 
 - Parameter storage, caller-owned inputs/outputs, temporary activations, workspace, and distributed staging have distinct lifetimes.
@@ -82,6 +92,9 @@ Long-running operations accept `context.Context`, use bounded resources, and hon
 - Pooling is an optimization, not an ownership model.
 - `sync.Pool` is opportunistic and must not be used for deterministic resource accounting.
 - Arena reset is legal only after all allocations from the arena are dead.
+- `memory.Pool` is a deterministic `storage.Allocator`: cached buffers are keyed by exact size, zeroed before reuse, and returned only after the final retained handle is released.
+- `memory.Arena` is a fixed-capacity, 8-byte-aligned bump allocator; `memory.Workspace` validates all arenas before reset and closes them in reverse registration order.
+- Pool, arena and workspace statistics expose active, allocated, cached and peak bytes plus reuse and rejection counters; limits fail with explicit errors instead of silent growth.
 
 ## Distributed identity
 
