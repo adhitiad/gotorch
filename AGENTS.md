@@ -24,7 +24,7 @@ Read in this order:
 5. The matching portable skill under `.agents/skills/<skill>/SKILL.md`.
 6. Related workflows/templates under `.agent/`.
 
-Do not create a competing roadmap or maintain duplicate phase statuses in other files. When scope/status changes, update `docs/TASK.md` in the same commit.
+Do not create a competing roadmap or maintain duplicate phase statuses in other files. When scope/status changes, update `docs/TASK.md` in the same commit. `docs/off-task.md` is an event log for work that has no task ID in `docs/TASK.md`; it is not a second roadmap and never carries phase status.
 
 ## 3. Repository layout — mandatory
 
@@ -48,7 +48,8 @@ See [Repository Layout and Phase Plan](docs/TASK.md#2-repository-layout-and-sour
 - Never force-push, rewrite history or overwrite other agent work.
 - Keep changes scoped to the selected task. State public API, numerical, memory, concurrency, portability and security impacts.
 - Update tests, docs/ADR and the checklist with implementation changes.
-- Mark checklist items complete only after the relevant implementation and verification pass.
+- Mark the matching `docs/TASK.md` checkbox complete in the same change, and only after the relevant implementation and verification pass. An in-progress task stays unchecked.
+- If completed work does not map to any task ID in `docs/TASK.md`, record it in `docs/off-task.md` with scope, files, verification and status. Never invent a task ID or duplicate phase status there.
 - Report exact paths, commit, commands, results, limitations and next unblocked task.
 
 ### Language policy

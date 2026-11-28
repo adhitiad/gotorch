@@ -11,10 +11,13 @@
 ## API and subsystem guides
 - [Tensor API (P1)](TENSOR_API.md)
 - [Autograd API (P2)](AUTOGRAD_API.md)
+- [Neural Networks, Transformers and PEFT (P5)](P5_NEURAL_NETWORKS.md)
+- [Data Engine Contracts (P6)](P6_DATA_ENGINE.md)
 
 ## Planning
 - [Roadmap P0–P13](ROADMAP.md)
 - [Development Workflow](DEVELOPMENT.md)
+- [Off-task Work Log](off-task.md)
 - [Testing and Benchmarks](TESTING_BENCHMARKS.md)
 - [Platform Support](PLATFORMS.md)
 - [Glossary](GLOSSARY.md)

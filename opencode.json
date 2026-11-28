@@ -1,0 +1,42 @@
+{
+    "$schema": "https://opencode.ai/config.json",
+    "agent": {
+        "build": {
+            "description": "GoTorch primary engineering orchestrator",
+            "mode": "primary",
+            "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "temperature": 0.2,
+            "prompt": "{file:./.opencode/prompts/gotorch-engineer.md}"
+        },
+        "plan": {
+            "description": "GoTorch read-only planning and architecture analysis",
+            "mode": "primary",
+            "model": "nvidia/nemotron-3.5-super-vl-120b-a12b",
+            "temperature": 0.1,
+            "permission": {
+                "edit": "deny",
+                "bash": "deny"
+            }
+        },
+        "gotorch-reviewer": {
+            "description": "Independent GoTorch architecture and correctness reviewer",
+            "mode": "subagent",
+            "model": "opencode/big-pickle",
+            "temperature": 0.1,
+            "permission": {
+                "edit": "deny",
+                "bash": "deny"
+            },
+            "prompt": "{file:./.opencode/prompts/gotorch-reviewer.md}"
+        },
+        "gotorch-support": {
+            "description": "GoTorch documentation and lightweight engineering support",
+            "mode": "subagent",
+            "model": "opencode/hy4-flash-free",
+            "temperature": 0.3,
+            "permission": {
+                "edit": "deny"
+            }
+        }
+    }
+}

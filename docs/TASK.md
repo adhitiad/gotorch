@@ -271,27 +271,31 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Deliverables:** module abstraction, parameters, layers, initializers, losses, optimizers and learning-rate schedules.
 
-- [ ] `P05-001` Define Module, Parameter, buffer and state-dictionary contracts.
-- [ ] `P05-002` Implement module composition, parameter enumeration and train/eval mode.
-- [ ] `P05-003` Implement Linear and core activations.
-- [ ] `P05-004` Implement normalization and dropout foundations.
-- [ ] `P05-005` Implement convolution/pooling foundations with documented supported layouts.
-- [ ] `P05-006` Implement initialization functions and deterministic RNG injection.
-- [ ] `P05-007` Implement core loss functions with reduction semantics.
-- [ ] `P05-008` Implement SGD, momentum and weight decay.
-- [ ] `P05-009` Implement Adam and AdamW with state serialization.
-- [ ] `P05-010` Implement learning-rate scheduler interfaces and core schedules.
-- [ ] `P05-011` Add gradient and optimizer regression tests, including XOR/simple regression.
-- [ ] `P05-012` Document layer, loss and optimizer semantics.
-- [ ] `P05-013` Implement transformer primitives: embeddings, positional encoding/RoPE, LayerNorm and RMSNorm.
-- [ ] `P05-014` Implement attention primitives: MHA/GQA/MQA, causal/padding masks and numerically stable softmax.
-- [ ] `P05-015` Implement feed-forward/SwiGLU and composable encoder/decoder Transformer blocks with explicit shape/dtype contracts.
-- [ ] `P05-016` Implement named parameter targeting, freeze/unfreeze and trainable-parameter enumeration for fine-tuning.
-- [ ] `P05-017` Implement LoRA adapter injection, low-rank A/B parameters, target-module selection and gradient tests.
-- [ ] `P05-018` Implement adapter state save/load and safe merge/unmerge semantics.
-- [ ] `P05-019` Specify and prototype additional PEFT methods (IA3 and prompt/prefix tuning); ship only after independent acceptance tests.
+- [x] `P05-001` Define Module, Parameter, buffer and state-dictionary contracts.
+- [x] `P05-002` Implement module composition, parameter enumeration and train/eval mode.
+- [x] `P05-003` Implement Linear and core activations.
+- [x] `P05-004` Implement normalization and dropout foundations.
+- [x] `P05-005` Implement convolution/pooling foundations with documented supported layouts.
+- [x] `P05-006` Implement initialization functions and deterministic RNG injection.
+- [x] `P05-007` Implement core loss functions with reduction semantics.
+- [x] `P05-008` Implement SGD, momentum and weight decay.
+- [x] `P05-009` Implement Adam and AdamW with state serialization.
+- [x] `P05-010` Implement learning-rate scheduler interfaces and core schedules.
+- [x] `P05-011` Add gradient and optimizer regression tests, including XOR/simple regression.
+- [x] `P05-012` Document layer, loss and optimizer semantics.
+- [x] `P05-013` Implement transformer primitives: embeddings, positional encoding/RoPE, LayerNorm and RMSNorm.
+- [x] `P05-014` Implement attention primitives: MHA/GQA/MQA, causal/padding masks and numerically stable softmax.
+- [x] `P05-015` Implement feed-forward/SwiGLU and composable encoder/decoder Transformer blocks with explicit shape/dtype contracts.
+- [x] `P05-016` Implement named parameter targeting, freeze/unfreeze and trainable-parameter enumeration for fine-tuning.
+- [x] `P05-017` Implement LoRA adapter injection, low-rank A/B parameters, target-module selection and gradient tests.
+- [x] `P05-018` Implement adapter state save/load and safe merge/unmerge semantics.
+- [x] `P05-019` Specify and prototype additional PEFT methods (IA3 and prompt/prefix tuning); ship only after independent acceptance tests.
 
 **Exit gates:** forward/backward results are correct; optimizer state is serializable; seeded tests are deterministic; training examples converge within stated tolerances. Transformer layers pass shape, numerical and gradient checks against small reference fixtures. LoRA updates only the declared trainable parameters, preserves frozen base weights and round-trips adapter state.
+
+**Current implementation slice:** `src/nn` supplies `Module`, `Parameter`, persistent/non-persistent buffers, fully qualified sorted names, train/eval propagation, a versioned binary `StateDict`, and a `Context` that caches one tape leaf per parameter. Its differential operations cover linear, activations, LayerNorm/RMSNorm, dropout, NCHW Conv2D and pooling, reshape/transpose/matmul helpers, embedding, RoPE and grouped-query attention with additive masks and max-subtracted softmax; MSE and cross-entropy provide the documented reductions. Deterministic seeded initializers are provided. `src/optim` supplies parameter selection by glob, SGD with momentum/Nesterov and coupled decay, Adam/AdamW with decoupled decay and versioned sorted state, and constant/exponential/step/linear/cosine/warmup schedules. `src/transformer` supplies token embedding with persistent RoPE tables, MHA/GQA/MQA, GELU feed-forward and SwiGLU, and composable encoder/decoder blocks and stacks. `src/peft` supplies named targeting, freeze/unfreeze, trainable-parameter enumeration, LoRA with transactional merge/unmerge and adapter state, plus independently tested IA3, prompt tuning and prefix tuning prototypes with explicit contract limits. Semantics are recorded in [`P5_NEURAL_NETWORKS.md`](P5_NEURAL_NETWORKS.md) and [`CORE_CONTRACTS.md`](CORE_CONTRACTS.md); architectural decisions are in [ADR-0004](adr/0004-p5-context-and-peft-boundaries.md).
+
+**Verification:** local runs of `gofmt -l .`, `go test ./... -count=1`, `go vet ./...`, `go test -tags=gotorch_blas ./... -count=1`, `go vet -tags=gotorch_blas ./...`, benchmark smoke with `-benchmem`, and `CGO_ENABLED=0` cross-builds for Windows AMD64, Linux AMD64 and Linux ARM64 all passed. Finite-difference checks cover nn operations and optimizer paths; convergence tests cover linear regression and XOR; state round-trips cover `nn.StateDict`, optimizer state and adapters. A batch > 1 scoring-offset bug found during transformer numerical tests was fixed in `src/nn/attention_ops.go` and covered by regression tests in both `src/nn` and `src/transformer`. No P5-specific benchmarks are registered; repository benchmark smoke ran without failures. The Windows host has no C compiler, so `go test -race` could not run locally; Linux native CI remains the race/leak source of truth.
 
 ### P6 — Data & Tokenizer Engine
 
@@ -299,21 +303,25 @@ Checkboxes are the implementation record. Only mark an item complete when its co
 
 **Deliverables:** dataset interfaces, samplers, DataLoader, transforms, batching, prefetch, caching and streaming adapters. Start with streaming JSONL/NDJSON and CSV adapters using the Go standard library; add Parquet and Hugging Face Hub support as optional adapters. See [Go AI Ecosystem Guide](AI_ECOSYSTEM.md).
 
-- [ ] `P06-001` Define Dataset, Sample, Sampler and Batch contracts.
-- [ ] `P06-002` Implement sequential and random samplers with explicit seeds.
-- [ ] `P06-003` Implement batching, collate functions and last-batch policies.
-- [ ] `P06-004` Implement transform composition and validation.
-- [ ] `P06-005` Implement bounded prefetch workers and cancellation-safe shutdown.
-- [ ] `P06-006` Implement optional cache and streaming source interfaces.
-- [ ] `P06-007` Add determinism, worker failure, cancellation and resource-bound tests.
-- [ ] `P06-008` Benchmark throughput, latency and memory footprint.
-- [ ] `P06-009` Define Tokenizer/Encoding interfaces with deterministic encode/decode and special-token handling.
-- [ ] `P06-010` Implement BPE and byte-level BPE tokenization with merge-rank and Unicode edge-case tests.
-- [ ] `P06-011` Implement WordPiece and SentencePiece/Unigram tokenization behind independent implementations and explicit compatibility fixtures.
-- [ ] `P06-012` Parse supported tokenizer assets/configuration directly in Go, including vocabulary, merges, added tokens and special-token maps.
-- [ ] `P06-013` Implement instruction and preference dataset schemas plus SFT/DPO collators, masks and truncation policies.
+- [x] `P06-001` Define Dataset, Sample, Sampler and Batch contracts.
+- [x] `P06-002` Implement sequential and random samplers with explicit seeds.
+- [x] `P06-003` Implement batching, collate functions and last-batch policies.
+- [x] `P06-004` Implement transform composition and validation.
+- [x] `P06-005` Implement bounded prefetch workers and cancellation-safe shutdown.
+- [x] `P06-006` Implement optional cache and streaming source interfaces.
+- [x] `P06-007` Add determinism, worker failure, cancellation and resource-bound tests.
+- [x] `P06-008` Benchmark throughput, latency and memory footprint.
+- [x] `P06-009` Define Tokenizer/Encoding interfaces with deterministic encode/decode and special-token handling.
+- [x] `P06-010` Implement BPE and byte-level BPE tokenization with merge-rank and Unicode edge-case tests.
+- [x] `P06-011` Implement WordPiece and SentencePiece/Unigram tokenization behind independent implementations and explicit compatibility fixtures.
+- [x] `P06-012` Parse supported tokenizer assets/configuration directly in Go, including vocabulary, merges, added tokens and special-token maps.
+- [x] `P06-013` Implement instruction and preference dataset schemas plus SFT/DPO collators, masks and truncation policies.
 
 **Exit gates:** same seed produces documented ordering; errors do not strand workers; memory and worker counts are bounded; throughput benchmarks are reproducible. Tokenizer behavior is verified against checked-in reference vectors and reports unsupported tokenizer features instead of silently degrading.
+
+**Current implementation slice:** `src/data` defines the initial P6 contracts. `Sample` copies its field map on construction, exposes sorted names and borrowed values, and has a valid zero value. `Dataset` is a finite random-access interface with stable `Len`, context-aware `At`, concurrent-reader support and idempotent `Close`. `Sampler` maps an epoch position to a dataset index with no hidden cursor. `SequentialSampler` emits indices in natural order; `RandomSampler` builds one immutable permutation from an explicit seed and a local `math/rand` source, exposes the seed, and never uses the global RNG. Both validate context and position, support zero length, and are safe for concurrent workers. `Batch` pairs samples with source indices, copies both input slices, and exposes only defensive reads. `Batcher` resolves sampler positions with a stateless `KeepLast`/`DropLast` policy and a caller-supplied `CollateFunc`; `DefaultCollate` is the no-op collator. `Transform` is a stateless per-sample mapping; `TransformChain` composes steps with context checks and defensive clones, `RequireFields` validates required fields, and `CollateWithTransform` applies a chain before collation. Errors wrap existing `errs` sentinels and cancellation is returned as `ctx.Err()`, taking precedence over a failing step error. `DataLoader` adds bounded prefetch with a fixed worker count, one reordering dispatcher, explicit channel capacities, and `Close` that cancels and joins every goroutine. `Cache[V]` has a bounded concurrent LRU implementation, while `Source` provides a sequential reader that `NewSourceDataset` can materialize under an explicit sample limit. Contract semantics are recorded in [`P6_DATA_ENGINE.md`](P6_DATA_ENGINE.md), [`CORE_CONTRACTS.md`](CORE_CONTRACTS.md), [ADR-0005](adr/0005-data-contract-boundaries.md), [ADR-0006](adr/0006-p6-prefetch-cache-and-sources.md) and [ADR-0007](adr/0007-tokenizer-contract-boundaries.md). `data.Tokenizer` maps text to token IDs and back deterministically; `Encoding` holds IDs, tokens, character offsets, and a special-token mask, all defensively copied. `NewByteTokenizer()` is a deterministic reference tokenizer (one ID per byte; BOS/EOS wrapped). `TokenizerFunc` adapts a plain encode/decode pair into a `Tokenizer`. `NewCharLevelBPETokenizer` and `NewByteLevelBPETokenizer` implement BPE with merge-rank training; `Train` builds vocabulary and merge rules deterministically. JSONL/CSV adapters remain unimplemented roadmap items. `data.TokenizerConfig` loads tokenizer assets directly from files (`vocab.json`/`vocab.txt`, `merges.txt`, `added_tokens.json`, `special_tokens_map.json`, `tokenizer_config.json`); `FromDirectory` and `FromFiles` build configs, `Validate` checks consistency, and lookups (`SpecialTokenID`, `TokenForID`, `IDForToken`, `SortedVocab`) provide bidirectional access. `data.InstructionSample` and `data.PreferenceSample` define SFT and DPO dataset schemas with `NewInstructionSample`/`NewPreferenceSample` validation. `data.InstructionCollate` and `data.DPOCollate` implement SFT/DPO collation with truncation, padding, and loss masks. `data.Truncate`, `data.CausalMask`, `data.BidirectionalMask`, `data.LossMask`, and `data.SortIndices` provide truncation and masking utilities. `data.ValidateSchema` checks required fields per schema.
+
+**Verification:** local runs of `gofmt -l .`, `go test ./... -count=1`, `go vet ./...`, `go test -tags=gotorch_blas ./... -count=1`, `go vet -tags=gotorch_blas ./...`, benchmark smoke with `-benchmem`, and `CGO_ENABLED=0` cross-builds for Windows AMD64, Linux AMD64 and Linux ARM64 all passed. `src/data` tests cover context and index bounds, cancellation, closed datasets, deterministic sampler positions, concurrent sampler calls, defensive copies, batch validation, and a dataset-to-sampler-to-batch round trip. `P06-002` adds checks for sequential identity ordering, same-seed permutation equality, different-seed ordering differences, permutation coverage, zero-length samplers, nil receivers, and an `int`-overflow length guard that is exercised on 32-bit targets. `P06-003` adds coverage for keep/drop batch counts, partial batches, sampler ordering, custom collate isolation, constructor and runtime validation, cancellation during a read, and concurrent batch construction. `P06-004` covers chain ordering, empty and nil chains, typed-nil transforms, field validation, mid-chain cancellation, and concurrent transform application. `P06-005` verifies ordered batches under out-of-order completion, zero prefetch, empty epochs, constructor bounds, worker failure, blocked-read cancellation, and idempotent close. `P06-006` verifies LRU eviction, cache validation and concurrency, sequential source behavior, bounded materialization, and its integration with the batcher. `P06-007` verifies seed determinism across worker counts, transform and dataset failures, cancellation before and during reads, channel capacities, in-flight bound, maximum concurrent reads, and that no worker remains active after shutdown. `P06-008` registers benchmarks in `src/data/benchmark_test.go` for sampler index lookup, batch construction and read, transform chain apply, cache get/put, batcher pipeline, data loader throughput, sample clone, and new sample construction. All benchmarks report `ns/op`, `MB/s`, `B/op`, and `allocs/op`; throughput benchmarks ran at 2,000,000 iterations without failures. `P06-009` verifies default special IDs, encoding defensive copies and clone independence, byte tokenizer round-trip, empty text, special token lookup, validation (nil/canceled context, nil receiver, unknown ID, out-of-vocab ID), determinism across instances, encode batch, and `TokenizerFunc` construction validation. `P06-010` verifies BPE training and round-trip, determinism across instances, merge-rank ordering, byte-level BPE, Unicode edge cases (accented characters, CJK, emoji, combining marks, ZWJ sequences), empty text, single character, validation (nil/canceled context, nil receiver, untrained tokenizer, unknown ID, vocab too small), encode batch, special tokens, and encoding defensive copies. `P06-011` verifies WordPiece training/round-trip, `##` continuation prefix, longest-match-first segmentation, vocab-with-constructor compatibility, determinism across instances, Unicode edge cases, empty text, validation (nil/canceled context, nil receiver, untrained tokenizer, unknown ID, vocab too small), encode batch, special tokens, and defensive copies. It also verifies Unigram/SentencePiece training/round-trip, `_` word-start prefix, DP segmentation maximizing log probability, `LogProb` accessor, vocab-with-constructor-and-probabilities compatibility, determinism, Unicode edge cases, and the same validation matrix. `P06-012` verifies tokenizer asset parsing: `FromDirectory` and `FromFiles` loading, `vocab.json` (flat and wrapper formats) and `vocab.txt` parsing, `merges.txt` parsing with rank and ID resolution, `added_tokens.json` (list and map formats), `special_tokens_map.json` and `tokenizer_config.json` parsing, `SpecialTokenID`/`TokenForID`/`IDForToken`/`SortedVocab` lookups, `Validate` consistency checks (missing special token, invalid merge ID), nil context/config handling, and validation errors (empty token, negative ID, invalid JSON). `P06-013` verifies instruction/preference schema construction and validation, SFT/DPO collation with truncation/padding/loss masks, causal/bidirectional/loss masks, truncation policies (end/start/none), sort indices, and schema field validation. The Windows host has no C compiler, so `go test -race` could not run locally; Linux native CI remains the race source of truth.
 
 ### P7 — Compiler & Graph Optimization
 
@@ -489,8 +497,8 @@ For runtime-specific instruction/skill discovery, consult [`docs/AGENT_SETUP.md`
 6. Work only within the selected task's scope. Do not silently expand into another phase.
 7. Add/update tests and documentation with code changes.
 8. Run the relevant checks and record exact commands/results.
-9. Update this checklist in the same change. Only tick items that are actually verified.
-10. Report task ID, files changed, commit/PR, tests, remaining limitations and next unblocked task.
+9. Tick the matching checkbox in this file in the same change, and only after verification. If the completed work has no task ID in this file, append an entry to [`off-task.md`](off-task.md) instead; do not invent a task ID.
+10. Report task ID (or the off-task entry ID), files changed, commit/PR, tests, remaining limitations and next unblocked task.
 
 ### Multi-agent coordination rules
 
@@ -510,6 +518,12 @@ For runtime-specific instruction/skill discovery, consult [`docs/AGENT_SETUP.md`
 - A task in progress remains `[ ]`; record its owner and branch in the associated GitHub issue/PR or implementation note.
 - A failed or skipped check is not complete. State it explicitly in the report.
 - Phase completion requires every task and phase exit gate to be checked, plus maintainer review for public contracts.
+
+### Off-task work
+
+- Work that does not map to a task ID in this file is recorded in [`off-task.md`](off-task.md) with date, scope, files, verification and status.
+- That log is not a second roadmap: it never changes phase status and never creates implicit task IDs.
+- If an off-task item later becomes a canonical task, add the task ID here and mark the off-task entry as superseded by that ID.
 
 ---
 

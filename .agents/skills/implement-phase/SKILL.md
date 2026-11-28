@@ -17,8 +17,9 @@ Phase ID, task scope, repository state, and acceptance criteria.
 6. Add unit, boundary, differential, and concurrency tests as applicable.
 7. Update docs and examples.
 8. Run gofmt, go test, go vet, race tests, and benchmarks relevant to the change.
-9. Review exported API, platform compatibility, and regressions.
-10. Report completed work, exact verification, limitations, and remaining tasks.
+9. Tick the matching `docs/TASK.md` checkbox only after verification. If the work has no task ID there, append an entry to `docs/off-task.md` instead; do not invent a task ID or duplicate phase status.
+10. Review exported API, platform compatibility, and regressions.
+11. Report completed work, exact verification, limitations, and remaining tasks.
 
 ## Stop conditions
 Stop and ask for a decision if requirements conflict with fundamental architecture, public API compatibility, security, or data-loss safety. Do not silently weaken acceptance criteria.
