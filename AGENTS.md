@@ -24,7 +24,7 @@ Read in this order:
 5. The matching portable skill under `.agents/skills/<skill>/SKILL.md`.
 6. Related workflows/templates under `.agent/`.
 
-Do not create a competing roadmap or maintain duplicate phase statuses in other files. When scope/status changes, update `docs/TASK.md` in the same PR/commit.
+Do not create a competing roadmap or maintain duplicate phase statuses in other files. When scope/status changes, update `docs/TASK.md` in the same commit.
 
 ## 3. Repository layout — mandatory
 
@@ -42,13 +42,20 @@ See [Repository Layout and Phase Plan](docs/TASK.md#2-repository-layout-and-sour
 ## 4. Task execution protocol
 
 - Select one unchecked task ID from `docs/TASK.md`; verify its dependencies first.
-- Check existing issues/PRs and branch state before changing files. Do not duplicate another agent's active task.
-- Work on `adhitiad_gpt` or a dedicated task/agent branch based on it. Integrate by PR when work is parallel.
-- Do not push directly to `main`, force-push, rewrite history or overwrite other agent work unless the repository owner explicitly authorizes it.
+- Check existing issues and repository state before changing files. Do not duplicate another agent's active task.
+- Do not run `git commit` or `git push` until the repository owner explicitly instructs it in the current conversation. Prepare and verify changes locally first.
+- When instructed, commit and push only to `main`. Do not commit or push to `adhitiad_gpt`, feature branches or any other branch.
+- Never force-push, rewrite history or overwrite other agent work.
 - Keep changes scoped to the selected task. State public API, numerical, memory, concurrency, portability and security impacts.
 - Update tests, docs/ADR and the checklist with implementation changes.
 - Mark checklist items complete only after the relevant implementation and verification pass.
-- Report exact paths, commit/PR, commands, results, limitations and next unblocked task.
+- Report exact paths, commit, commands, results, limitations and next unblocked task.
+
+### Language policy
+
+- All agent-authored prose outside `.md` files must be written in Indonesian: chat replies, commit messages, pull-request and issue text, review comments and code comments.
+- Go identifiers, public API names, package names, error strings and other program-facing text remain in English for compatibility.
+- `.md` files are exempt and may remain in English.
 
 ## 5. Engineering constraints
 
@@ -82,7 +89,7 @@ GOOS=linux GOARCH=arm64 go build ./...
 
 - `Makefile` wrappers: `make fmt|test|race|vet|check|bench` (`check=test+vet`).
 - No `golangci-lint`, typecheck, or codegen config is present; do not invent them.
-- CI (`.github/workflows/ci.yml`) is the native verification source of truth: Windows AMD64, Linux AMD64, Linux ARM64 (`ubuntu-24.04-arm`), Go `1.27.x`; runs `go test ./...`, `go vet ./...`, and `go test -race ./...` on Linux. Push branches: `main`, `adhitiad_gpt`. Local cross-builds do not replace native CI.
+- CI (`.github/workflows/ci.yml`) is the native verification source of truth: Windows AMD64, Linux AMD64, Linux ARM64 (`ubuntu-24.04-arm`), Go `1.27.x`; runs `go test ./...`, `go vet ./...`, and `go test -race ./...` on Linux. Agent push branch: `main` only. Local cross-builds do not replace native CI.
 
 ## 7. Definition of done
 
