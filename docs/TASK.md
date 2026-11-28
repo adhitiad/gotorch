@@ -7,7 +7,7 @@
 - **Development branch:** `adhitiad_gpt`
 - **Stable/release target:** `main`
 - **Current phase:** P3 — CPU Compute
-- **Current status:** P0, P1 and P2 are implemented and verified. P2 provides a Go-native reverse/forward automatic-differentiation engine, gradient lifecycle, custom VJP/JVP rules and finite-difference checks. The native Go 1.27 matrix passed on Windows AMD64, Linux AMD64 and Linux ARM64; see [Autograd API](AUTOGRAD_API.md), [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
+- **Current status:** P0–P3 implementation is present. The 2026-11-28 integrity audit identified P1 write-locking and P2 typed-nil-context gaps; fixes are under verification in [P0–P3 Engineering Audit](P0_P3_AUDIT.md). Do not treat this follow-up as verified until its own CI runs pass. See [Autograd API](AUTOGRAD_API.md), [P1 API Review](P1_API_REVIEW.md) and [Tensor API](TENSOR_API.md).
 
 ---
 ## 1. Project definition
