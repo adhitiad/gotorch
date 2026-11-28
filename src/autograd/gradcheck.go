@@ -53,7 +53,7 @@ func CheckGradient(
 	options GradientCheckOptions,
 ) (GradientCheckResult, error) {
 	result := GradientCheckResult{Passed: true}
-	if ctx == nil || input == nil || fn == nil {
+	if nilContext(ctx) || input == nil || fn == nil {
 		return result, errs.ErrInvalidArgument
 	}
 	inputValues, elementType, dimensions, err := readNumbers(input)

@@ -1,12 +1,16 @@
 package tensor
 
 import (
+	"context"
 	"errors"
+	"io"
 	"reflect"
+	"sync"
 	"testing"
 
 	"github.com/adhitiad/gotorch/src/dtype"
 	"github.com/adhitiad/gotorch/src/errs"
+	"github.com/adhitiad/gotorch/src/storage"
 )
 
 func TestTensorZeroValueAndClose(t *testing.T) {
@@ -185,5 +189,126 @@ func TestClosedTensorRejectsDataAccess(t *testing.T) {
 	}
 	if err := Write(tensor, []float32{2}); !errors.Is(err, errs.ErrInvalidState) {
 		t.Fatalf("Write after Close error = %v", err)
+	}
+}
+
+// unlockedTestAllocator intentionally supplies storage without internal locking.
+// Tensor's own handle must serialize overlapping writes made through that handle.
+type unlockedTestAllocator struct{}
+
+type unlockedTestAllocation struct {
+	data []byte
+	refs int64
+}
+
+type unlockedTestStorage struct {
+	allocation *unlockedTestAllocation
+	released   bool
+}
+
+func (unlockedTestAllocator) Allocate(_ context.Context, size int64) (storage.Storage, error) {
+	return &unlockedTestStorage{allocation: &unlockedTestAllocation{data: make([]byte, int(size)), refs: 1}}, nil
+}
+
+func (s *unlockedTestStorage) Size() int64 {
+	if s == nil || s.released || s.allocation == nil {
+		return 0
+	}
+	return int64(len(s.allocation.data))
+}
+
+func (s *unlockedTestStorage) Retain() (storage.Storage, error) {
+	if s == nil || s.released || s.allocation == nil {
+		return nil, errs.ErrStorageReleased
+	}
+	s.allocation.refs++
+	return &unlockedTestStorage{allocation: s.allocation}, nil
+}
+
+func (s *unlockedTestStorage) Release() error {
+	if s == nil || s.released || s.allocation == nil {
+		return errs.ErrStorageReleased
+	}
+	s.released = true
+	s.allocation.refs--
+	if s.allocation.refs == 0 {
+		clear(s.allocation.data)
+		s.allocation.data = nil
+	}
+	return nil
+}
+
+func (s *unlockedTestStorage) ReadAt(p []byte, off int64) (int, error) {
+	if s == nil || s.released || s.allocation == nil {
+		return 0, errs.ErrStorageReleased
+	}
+	if off < 0 {
+		return 0, errs.ErrInvalidArgument
+	}
+	if off >= int64(len(s.allocation.data)) && len(p) > 0 {
+		return 0, io.EOF
+	}
+	n := copy(p, s.allocation.data[int(off):])
+	if n != len(p) {
+		return n, io.EOF
+	}
+	return n, nil
+}
+
+func (s *unlockedTestStorage) WriteAt(p []byte, off int64) (int, error) {
+	if s == nil || s.released || s.allocation == nil {
+		return 0, errs.ErrStorageReleased
+	}
+	if off < 0 {
+		return 0, errs.ErrInvalidArgument
+	}
+	if off >= int64(len(s.allocation.data)) && len(p) > 0 {
+		return 0, io.ErrShortWrite
+	}
+	n := copy(s.allocation.data[int(off):], p)
+	if n != len(p) {
+		return n, io.ErrShortWrite
+	}
+	return n, nil
+}
+
+func TestConcurrentWritesThroughOneTensorHandleAreSerialized(t *testing.T) {
+	value, err := NewTensorWithAllocator(unlockedTestAllocator{}, dtype.Float64, 4096)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer value.Close()
+	left := make([]float64, 4096)
+	right := make([]float64, 4096)
+	for i := range left {
+		left[i], right[i] = 1, 2
+	}
+	var workers sync.WaitGroup
+	for _, values := range [][]float64{left, right} {
+		values := values
+		workers.Add(1)
+		go func() {
+			defer workers.Done()
+			for iteration := 0; iteration < 20; iteration++ {
+				if err := Write(value, values); err != nil {
+					t.Errorf("concurrent Write: %v", err)
+					return
+				}
+			}
+		}()
+	}
+	workers.Wait()
+	got, err := Read[float64](value)
+	if err != nil {
+		t.Fatal(err)
+	}
+	first := got[0]
+	if first != 1 && first != 2 {
+		t.Fatalf("unexpected first value %v", first)
+	}
+	for index, item := range got {
+		if item != first {
+			t.Fatalf("concurrent writes interleaved at index %d: got %v, first %v", index, item, first)
+		}
 	}
 }
