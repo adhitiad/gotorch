@@ -83,9 +83,11 @@ func (r *Registry) Execute(ctx context.Context, spec KernelSpec, call Invocation
 	return Run(ctx, backend, spec, call)
 }
 
-// Close prevents new dispatch and closes registered backends in reverse order.
-// Backends without a Close() error method require no additional lifecycle action.
-// It waits for each backend's own Close implementation to drain in-flight work.
+// Close prevents new dispatch, closes registered backends in reverse order, and
+// releases the registry's backend references. Backends without a Close() error
+// method require no additional lifecycle action. It waits for each backend's own
+// Close implementation to drain in-flight work. Repeated calls return the first
+// close result without closing backends again.
 func (r *Registry) Close() error {
 	if r == nil {
 		return errs.ErrInvalidArgument
@@ -95,25 +97,37 @@ func (r *Registry) Close() error {
 	if r.closed {
 		return r.closeErr
 	}
-	r.closed = true
 	var closeErrors []error
 	for i := len(r.backends) - 1; i >= 0; i-- {
-		if closer, ok := r.backends[i].(interface{ Close() error }); ok {
-			if err := closer.Close(); err != nil {
-				closeErrors = append(closeErrors, fmt.Errorf("close backend %q: %w", r.backends[i].Name(), err))
-			}
+		backend := r.backends[i]
+		r.backends[i] = nil
+		closer, ok := backend.(interface{ Close() error })
+		if !ok {
+			continue
+		}
+		name := backend.Name()
+		if err := closer.Close(); err != nil {
+			closeErrors = append(closeErrors, fmt.Errorf("close backend %q: %w", name, err))
 		}
 	}
+	r.backends = nil
+	r.names = nil
 	r.closeErr = errors.Join(closeErrors...)
+	r.closed = true
 	return r.closeErr
 }
 
+// Backends returns registered backend names in registration order. It returns
+// nil once the registry is closed because Close releases the backend references.
 func (r *Registry) Backends() []string {
 	if r == nil {
 		return nil
 	}
 	r.mu.RLock()
 	defer r.mu.RUnlock()
+	if r.closed {
+		return nil
+	}
 	names := make([]string, len(r.backends))
 	for i, backend := range r.backends {
 		names[i] = backend.Name()
