@@ -145,7 +145,6 @@ func tensorMustFloat32(t *testing.T, values []float32, dimensions ...int64) *ten
 	return value
 }
 
-
 type typedNilContext struct{}
 
 func (*typedNilContext) Deadline() (time.Time, bool) { return time.Time{}, false }
